@@ -1,0 +1,142 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Infrastructure stack
+Parameters:
+  SubnetAZ0:
+    Type: String
+    Default: 10.50.0.0/24
+    Description: First AZ subnet
+    ConstraintDescription: must be a valid subnet string.
+  SubnetAZ1:
+    Type: String
+    Default: 10.50.1.0/24
+    Description: Second AZ subnet
+    ConstraintDescription: must be a valid subnet string.
+  SubnetAZ2:
+    Type: String
+    Default: 10.50.2.0/24
+    Description: Third AZ subnet
+    ConstraintDescription: must be a valid subnet string.
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.50.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: {{ vpc_name }}
+        - Key: Env
+          Value: {{ env }}
+  CoreOSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Principal:
+              Service:
+                - ec2.amazonaws.com
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+      Path: /
+  DefaultSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: {Ref: VPC}
+      GroupDescription: {{ env }}-vpc Default SG
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          FromPort: -1
+          ToPort: -1
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+          FromPort: 22
+          ToPort: 22
+      Tags:
+        - Key: Name
+          Value: {{ env }}-default
+        - Key: Env
+          Value: {{ env }}
+  AllTrafficSGIn:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: {Ref: DefaultSG}
+      IpProtocol: -1
+      SourceSecurityGroupId: {Ref: DefaultSG}
+      FromPort: -1
+      ToPort: -1
+{% for n in [0, 1, 2] %}
+  SubnetAZ{{ n }}Resource:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - '{{ n }}'
+          - Fn::GetAZs: ''
+      VpcId:
+        Ref: VPC
+      CidrBlock: {Ref: SubnetAZ{{ n }}}
+      Tags:
+        - Key: Name
+          Value: {{ env }}-primary
+        - Key: Env
+          Value: {{ env }}
+  SubnetRouteTableAssociationAZ{{ n }}:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: SubnetAZ{{ n }}Resource
+      RouteTableId:
+        Ref: RouteTable
+{%- endfor %}
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: {{ env }}-igw
+        - Key: Env
+          Value: {{ env }}
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPC
+      InternetGatewayId:
+        Ref: InternetGateway
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+        - Key: Name
+          Value: default
+        - Key: Env
+          Value: {{ env }}
+  Route:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+Outputs:
+  VpcId:
+    Value: {Ref: VPC}
+  CoreOSRole:
+    Value: {Ref: CoreOSRole}
+  DefaultSG:
+    Value: {Ref: DefaultSG}
+  SubnetAZ0:
+    Value: {Ref: SubnetAZ0Resource}
+  SubnetAZ1:
+    Value: {Ref: SubnetAZ1Resource}
+  SubnetAZ2:
+    Value: {Ref: SubnetAZ2Resource}

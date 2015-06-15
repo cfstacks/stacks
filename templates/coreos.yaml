@@ -1,0 +1,110 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CoreOS Cluster Stack in {{ environment }} environment
+Resources:
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - {{ get_stack_output(cf_conn, infra_stack_name, 'CoreOSRole') }}
+      Path: /
+
+  RolePolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: {{ stage }}-coreos
+      Roles:
+        - {{ get_stack_output(cf_conn, infra_stack_name, 'CoreOSRole') }}
+      PolicyDocument:
+        Statement:
+        - Resource: '*'
+          Effect: Allow
+          Action:
+            - ec2:DescribeInstances
+            - ec2:DescribeTags
+            - elasticloadbalancing:DescribeLoadBalancers
+            - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+            - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+        - Resource: 'arn:aws:s3:::example-bucket/*'
+          Effect: Allow
+          Action:
+            - 's3:Put*'
+            - 's3:Get*'
+        - Resource: 'arn:aws:s3:::example-bucket'
+          Effect: Allow
+          Action:
+            - 's3:*'
+
+  CoreOSScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones:
+        - Fn::Select:
+          - '0'
+          - Fn::GetAZs: ''
+        - Fn::Select:
+          - '1'
+          - Fn::GetAZs: ''
+        - Fn::Select:
+          - '2'
+          - Fn::GetAZs: ''
+      LaunchConfigurationName: {Ref: CoreOSLaunchConfig}
+      VPCZoneIdentifier:
+        - {{ get_stack_output(cf_conn, infra_stack_name, 'SubnetAZ0') }}
+        - {{ get_stack_output(cf_conn, infra_stack_name, 'SubnetAZ1') }}
+        - {{ get_stack_output(cf_conn, infra_stack_name, 'SubnetAZ2') }}
+      TerminationPolicies:
+        - 'OldestInstance'
+        - 'Default'
+      MaxSize: 100
+      MinSize: {{ coreos_min_instances }}
+      Tags:
+        - Key: Name
+          Value: {{ env }}-coreos
+          PropagateAtLaunch: true
+        - Key: Role
+          Value: coreos
+          PropagateAtLaunch: true
+        - Key: Env
+          Value: {{ env }}
+          PropagateAtLaunch: true
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: {{ coreos_min_instances }}
+        PauseTime: PT10M
+
+  CoreOSLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: {Ref: InstanceProfile}
+      ImageId: {{ get_ami_id(ec2_conn, coreos_ami_name) }}
+      InstanceMonitoring: false
+      InstanceType: {% if env == 'prod' %}m4.large{% else %}t2.small{% endif %}
+      KeyName: {{ ssh_key_name }}
+      SecurityGroups:
+        - {{ get_stack_output(cf_conn, infra_stack_name, 'DefaultSG') }}
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            VolumeSize: "80"
+            DeleteOnTermination: true
+            VolumeType: "gp2"
+      UserData:
+        'Fn::Base64': |
+          #cloud-config
+
+          coreos:
+            etcd:
+              discovery: {{ etcd_discovery_url }}
+              addr: $private_ipv4:4001
+              peer-addr: $private_ipv4:7001
+            fleet:
+              metadata: region={{ region }},public_ip=$public_ipv4,env={{ env }}
+            update:
+              reboot-strategy: 'best-effort'
+            units:
+              - name: etcd.service
+                command: start
+              - name: fleet.service
+                command: start
