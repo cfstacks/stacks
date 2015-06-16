@@ -36,6 +36,7 @@ CONFIG_FILE = basedir + '/config.yaml'
 AWS_CONFIG_FILE = os.environ['HOME'] + '/.aws/credentials'
 DEFAULT_PROFILE = 'default'
 DEFAULT_REGION = 'us-east-1'
+YES = ['y', 'Y', 'yes', 'YES', 'Yes']
 
 
 def _load_yaml(f):
@@ -242,8 +243,7 @@ def delete_stack(conn, name, region, profile):
            'profile: {}\n').format(name, region, profile)
     print(msg)
     response = input('Are you sure? [y/N] ')
-    yes = ['y', 'Y', 'yes', 'YES', 'Yes']
-    if response in yes:
+    if response in YES:
         conn.delete_stack(name)
 
 
@@ -313,8 +313,7 @@ def main():
             if not args.name.startswith(args.env):
                 msg = 'Stack name does not begin with env name. Are you sure?? [y/N] '
                 response = input(msg)
-                yes = ['y', 'Y', 'yes', 'YES', 'Yes']
-                if response in yes:
+                if response in YES:
                     create_stack(cf_conn, args.name, args.template, config, dry=args.dry_run)
             else:
                 create_stack(cf_conn, args.name, args.template, config, dry=args.dry_run)
