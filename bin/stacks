@@ -284,17 +284,17 @@ def main():
     elif get_region_name(args.profile):
         region = get_region_name(args.profile)
 
+    ec2_conn = boto.ec2.connect_to_region(region, profile_name=args.profile)
+    vpc_conn = boto.vpc.connect_to_region(region, profile_name=args.profile)
+    cf_conn = boto.cloudformation.connect_to_region(region, profile_name=args.profile)
+    r53_conn = boto.route53.connect_to_region(region, profile_name=args.profile)
+    s3_conn = boto.s3.connect_to_region(region, profile_name=args.profile)
+
     if args.subcommand == 'list':
-        conn = boto.cloudformation.connect_to_region(region, profile_name=args.profile)
-        print(list_stacks(conn, args.name, args.verbose))
-        conn.close()
+        print(list_stacks(cf_conn, args.name, args.verbose))
+        cf_conn.close()
 
     if args.subcommand == 'create' or args.subcommand == 'update':
-        ec2_conn = boto.ec2.connect_to_region(region, profile_name=args.profile)
-        vpc_conn = boto.vpc.connect_to_region(region, profile_name=args.profile)
-        cf_conn = boto.cloudformation.connect_to_region(region, profile_name=args.profile)
-        r53_conn = boto.route53.connect_to_region(region, profile_name=args.profile)
-        s3_conn = boto.s3.connect_to_region(region, profile_name=args.profile)
         config = load_config('config.yaml', args.env)
         config['name'] = args.name
         config['env'] = args.env
@@ -324,7 +324,6 @@ def main():
             create_stack(cf_conn, args.name, args.template, config, update=True, dry=args.dry_run)
 
     if args.subcommand == 'delete':
-        cf_conn = boto.cloudformation.connect_to_region(region, profile_name=args.profile)
         delete_stack(cf_conn, args.name, region, args.profile)
 
 
