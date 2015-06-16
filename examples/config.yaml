@@ -10,4 +10,4 @@ prod:
 dev:
   vpc_name: dev-vpc
   infra_stack_name: dev-infra
-  etcd_discovery_url: https://discovery.etcd.io/2408dbac5b15811a8585d57931d9f001
+  etcd_discovery_url: <PASTE A URL HERE>
