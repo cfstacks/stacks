@@ -42,7 +42,6 @@ def _load_yaml(f):
     try:
         y = yaml.load(f)
         return y
-    # TODO respond to exceptions
     except:
         return None
 
@@ -52,12 +51,6 @@ def _merge_config(config, env):
     c = config['common'].copy()
     c.update(config[env])
     return c
-
-
-# TODO(vaijab)
-def _extract_error():
-    '''Reads AWS API response and extracs the error message'''
-    pass
 
 
 # Decorator for retrying when AWS is throttling API calls
