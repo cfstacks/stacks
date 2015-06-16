@@ -12,7 +12,7 @@ Resources:
   RolePolicies:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: {{ stage }}-coreos
+      PolicyName: {{ env }}-coreos
       Roles:
         - {{ get_stack_output(cf_conn, infra_stack_name, 'CoreOSRole') }}
       PolicyDocument:
