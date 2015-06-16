@@ -313,10 +313,9 @@ def main():
             if not args.name.startswith(args.env):
                 msg = 'Stack name does not begin with env name. Are you sure?? [y/N] '
                 response = input(msg)
-                if response in YES:
-                    create_stack(cf_conn, args.name, args.template, config, dry=args.dry_run)
-            else:
-                create_stack(cf_conn, args.name, args.template, config, dry=args.dry_run)
+                if response not in YES:
+                    sys.exit(0)
+            create_stack(cf_conn, args.name, args.template, config, dry=args.dry_run)
         else:
             if not args.env:
                 config['env'] = get_stack_tag(cf_conn, args.name, 'Env')
