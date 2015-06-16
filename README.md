@@ -61,12 +61,18 @@ Many times you would want your stacks to be decoupled, for example VPC stack
 should be decoupled from instances auto scaling group stack, but in order to
 launch the ASG in a particular VPC, you need to know VPCZoneIdentifier or VPC ID.
 
-See [templates directory](templates/) for some examples.
+See [examples directory](examples/) for some templates.
 
 Templating language is [jinja2](http://jinja.pocoo.org/docs/dev/templates/).
 
 Templates do not enforce stack naming convention, but a desired convention is
 to prefix stack names with env name.
+
+CloudFormation API has a template size limit. Instead of submiting templates
+over the API, we first upload them to S3 and then provide an https url. For
+that to work you must have an S3 bucket created and specified in `config.yaml`,
+either in `common` section or per env. Configuration key name is
+`templates_bucket_name`.
 
 ## Usage
 
