@@ -162,6 +162,18 @@ def gen_template(template, config, pretty=False):
     return json.dumps(yaml_out, indent=indent)
 
 
+def upload_template(conn, config, tpl, name):
+    '''Uploads a template to S3 bucket and returns S3 key url'''
+    bn = config.get('templates_bucket_name', '{}-stacks-{}'.format(config['env'], config['region']))
+    b = config['s3_conn'].get_bucket(bn)
+    h = hashlib.md5(tpl.encode('utf-8')).hexdigest()
+    k = boto.s3.key.Key(b)
+    k.key = '{}/{}/{}'.format(config['env'], name, h)
+    k.set_contents_from_string(tpl)
+    url = k.generate_url(expires_in=30)
+    return url
+
+
 def list_stacks(conn, name_filter='*', verbose=False):
     '''Lists active stacks'''
     stacks_filters = [
@@ -211,13 +223,7 @@ def create_stack(conn, name, template, config, update=False, dry=False):
         print("Template size: " + str(len(tpl)), file=sys.stderr)
         return True
 
-    bucket_name = '{}-stacks-{}'.format(config['env'], config['region'])
-    b = config['s3_conn'].get_bucket(bucket_name)
-    h = hashlib.md5(tpl.encode('utf-8')).hexdigest()
-    k = boto.s3.key.Key(b)
-    k.key = '{}/{}/{}'.format(config['env'], name, h)
-    k.set_contents_from_string(tpl)
-    url = k.generate_url(expires_in=30)
+    url = upload_template(conn, config, tpl, name)
 
     try:
         if update:
