@@ -3,6 +3,13 @@
 CloudFormation stacks management tool. It can generate templates, list, create,
 delete and update stacks.
 
+## Features
+
+- Templated YAML in jinja2
+- Cross-stack resource referencing
+- Multiple environments support
+- Flexible common and per environment configuration
+
 ## Installation
 
 It is written in Python and you need to have python 3.4 installed. Stacks
