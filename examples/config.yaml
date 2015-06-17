@@ -1,0 +1,13 @@
+---
+common:
+  ssh_key_name: vaijab
+  coreos_ami_name: CoreOS-beta-695.0.0-hvm
+  coreos_min_instances: 3
+
+prod:
+  vpc_name: prod-vpc
+  infra_stack_name: prod-infra
+dev:
+  vpc_name: dev-vpc
+  infra_stack_name: dev-infra
+  etcd_discovery_url: <PASTE A URL HERE>

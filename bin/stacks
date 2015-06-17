@@ -1,0 +1,329 @@
+#!/usr/bin/env python3
+
+from __future__ import print_function
+
+import os
+import sys
+import yaml
+import argparse
+import json
+import hashlib
+import time
+
+import boto.ec2
+import boto.vpc
+import boto.route53
+import boto.cloudformation
+import boto.s3
+import botocore.config
+import jinja2
+
+from boto.exception import BotoServerError
+from fnmatch import fnmatch
+from tabulate import tabulate
+
+
+# Resolve a basedir of this script
+if os.path.islink(__file__):
+    real_file = os.readlink(__file__)
+    basedir = os.path.realpath(os.path.dirname(real_file))
+else:
+    basedir = os.path.realpath(os.path.dirname(__file__))
+
+
+VERSION = '0.1'
+CONFIG_FILE = basedir + '/config.yaml'
+AWS_CONFIG_FILE = os.environ['HOME'] + '/.aws/credentials'
+DEFAULT_PROFILE = 'default'
+DEFAULT_REGION = 'us-east-1'
+YES = ['y', 'Y', 'yes', 'YES', 'Yes']
+
+
+def _load_yaml(f):
+    try:
+        y = yaml.load(f)
+        return y
+    except:
+        return None
+
+
+def _merge_config(config, env):
+    '''Merges config common with environment specific section'''
+    c = config['common'].copy()
+    c.update(config[env])
+    return c
+
+
+# Decorator for retrying when AWS is throttling API calls
+def throttling_retry(func):
+    def retry_call(*args, **kwargs):
+        retries = 0
+        while True:
+            try:
+                retval = func(*args)
+                return retval
+            except BotoServerError as err:
+                if err.code == 'Throttling' and retries <= 3:
+                    sleep = 3 * (2**retries)
+                    print('Being throttled. Retrying after {} seconds..'.format(sleep))
+                    time.sleep(sleep)
+                    retries += 1
+                else:
+                    raise err
+    return retry_call
+
+
+def _match_stack_name(name, pattern):
+    return fnmatch(name, pattern)
+
+
+def load_config(config_file, env):
+    '''Loads stack configuration file'''
+    with open(config_file) as f:
+        c = _load_yaml(f)
+        if c:
+            return _merge_config(c, env)
+        else:
+            return {}
+
+
+@throttling_retry
+def get_region_name(profile, config_file=AWS_CONFIG_FILE):
+    '''Return region name from AWS config file'''
+    try:
+        c = botocore.config.load_config(config_file)
+        r = c.get(profile, {}).get('region', DEFAULT_REGION)
+        return r
+    except:
+        raise RuntimeError('Failed loading config {}'.format(config_file))
+
+
+@throttling_retry
+def get_ami_id(conn, name):
+    '''Returns the first AMI ID given its name'''
+    images = conn.get_all_images(filters={'name': name})
+    conn.close()
+    if len(images) != 0:
+        return images[0].id
+    else:
+        raise RuntimeError('{} AMI not found'.format(name))
+
+
+@throttling_retry
+def get_zone_id(conn, name):
+    '''Returns the first Route53 zone ID given its name'''
+    zone = conn.get_zone(name)
+    conn.close()
+    if zone:
+        return zone.id
+    else:
+        raise RuntimeError('{} zone not found'.format(name))
+
+
+@throttling_retry
+def get_vpc_id(conn, name):
+    '''Returns the first VPC ID given its name and region'''
+    vpcs = conn.get_all_vpcs(filters={'tag:Name': name})
+    conn.close()
+    if len(vpcs) == 1:
+        return vpcs[0].id
+    else:
+        raise RuntimeError('{} VPC not found'.format(name))
+
+
+@throttling_retry
+def get_stack_output(conn, name, key):
+    '''Returns stack output key value'''
+    result = conn.describe_stacks(name)
+    if len(result) != 1:
+        raise RuntimeError('{} stack not found'.format(name))
+    outputs = [s.outputs for s in result][0]
+    for output in outputs:
+        if output.key == key:
+            return output.value
+    raise RuntimeError('{} output not found'.format(key))
+
+
+@throttling_retry
+def get_stack_tag(conn, name, tag):
+    '''Returns stack tag'''
+    result = conn.describe_stacks(name)
+    if len(result) != 1:
+        raise RuntimeError('{} stack not found'.format(name))
+    tags = [s.tags for s in result][0]
+    return tags.get(tag, '')
+
+
+def gen_template(template, config, pretty=False):
+    '''Return generated CloudFormation template string'''
+    tpl = jinja2.Template(template.read())
+    out = tpl.render(config)
+    yaml_out = yaml.load(out)
+    indent = 2 if pretty else None
+    return json.dumps(yaml_out, indent=indent)
+
+
+def upload_template(conn, config, tpl, name):
+    '''Uploads a template to S3 bucket and returns S3 key url'''
+    bn = config.get('templates_bucket_name', '{}-stacks-{}'.format(config['env'], config['region']))
+    b = config['s3_conn'].get_bucket(bn)
+    h = hashlib.md5(tpl.encode('utf-8')).hexdigest()
+    k = boto.s3.key.Key(b)
+    k.key = '{}/{}/{}'.format(config['env'], name, h)
+    k.set_contents_from_string(tpl)
+    url = k.generate_url(expires_in=30)
+    return url
+
+
+def list_stacks(conn, name_filter='*', verbose=False):
+    '''Lists active stacks'''
+    stacks_filters = [
+        'CREATE_COMPLETE',
+        'CREATE_IN_PROGRESS',
+        'CREATE_FAILED',
+        'DELETE_IN_PROGRESS',
+        'DELETE_FAILED',
+        'ROLLBACK_COMPLETE',
+        'ROLLBACK_FAILED',
+        'ROLLBACK_IN_PROGRESS',
+        'UPDATE_COMPLETE',
+        'UPDATE_IN_PROGRESS',
+        'UPDATE_ROLLBACK_COMPLETE',
+        'UPDATE_ROLLBACK_FAILED',
+        'UPDATE_ROLLBACK_IN_PROGRESS',
+    ]
+
+    s = conn.list_stacks(stacks_filters)
+
+    stacks = []
+    for n in s:
+        if name_filter and _match_stack_name(n.stack_name, name_filter):
+            columns = [n.stack_name, n.stack_status]
+            if verbose:
+                env = get_stack_tag(conn, n.stack_name, 'Env')
+                columns.append(env)
+                columns.append(n.template_description)
+            stacks.append(columns)
+            columns = []
+
+    if len(stacks) >= 1:
+        return tabulate(stacks, tablefmt='plain')
+    else:
+        return 'No stacks found'
+
+
+def create_stack(conn, name, template, config, update=False, dry=False):
+    '''Creates or updates CloudFormation stack from a jinja2 template'''
+    tags = {
+        'Env': config['env'],
+    }
+
+    tpl = gen_template(template, config, dry)
+    if dry:
+        print(tpl)
+        print("Template size: " + str(len(tpl)), file=sys.stderr)
+        return True
+
+    url = upload_template(conn, config, tpl, name)
+
+    try:
+        if update:
+            conn.update_stack(name, template_url=url, tags=tags, capabilities=['CAPABILITY_IAM'])
+        else:
+            conn.create_stack(name, template_url=url, tags=tags, capabilities=['CAPABILITY_IAM'])
+    except BotoServerError as err:
+        print(err)
+
+
+def delete_stack(conn, name, region, profile):
+    '''Deletes stack given its name'''
+    msg = ('You are about to delete the following stack:\n'
+           'name: {}\n'
+           'region: {}\n'
+           'profile: {}\n').format(name, region, profile)
+    print(msg)
+    response = input('Are you sure? [y/N] ')
+    if response in YES:
+        conn.delete_stack(name)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--profile', default=DEFAULT_PROFILE)
+    parser.add_argument('-r', '--region')
+    subparsers = parser.add_subparsers(title='available subcommands', dest='subcommand')
+
+    parser_list = subparsers.add_parser('list', help='List stacks')
+    parser_list.add_argument('-v', '--verbose', action='store_true')
+    parser_list.add_argument('name', default='*', nargs='?',
+                             help='stack name or unix shell-style pattern')
+
+    parser_create = subparsers.add_parser('create', help='Create a new stack')
+    parser_create.add_argument('-t', '--template', required=True, type=argparse.FileType())
+    parser_create.add_argument('name')
+    parser_create.add_argument('-e', '--env', required=True)
+    parser_create.add_argument('-d', '--dry-run', action='store_true')
+
+    parser_update = subparsers.add_parser('update', help='Update an existing stack')
+    parser_update.add_argument('-t', '--template', required=True, type=argparse.FileType())
+    parser_update.add_argument('name')
+    parser_update.add_argument('-e', '--env', required=True)
+    parser_update.add_argument('-d', '--dry-run', action='store_true')
+
+    parser_delete = subparsers.add_parser('delete', help='Delete an existing stack')
+    parser_delete.add_argument('name')
+
+    args = parser.parse_args()
+
+    if not args.subcommand:
+        parser.print_help()
+
+    # Set region name from cli arg or aws config file
+    if args.region:
+        region = args.region
+    elif get_region_name(args.profile):
+        region = get_region_name(args.profile)
+
+    ec2_conn = boto.ec2.connect_to_region(region, profile_name=args.profile)
+    vpc_conn = boto.vpc.connect_to_region(region, profile_name=args.profile)
+    cf_conn = boto.cloudformation.connect_to_region(region, profile_name=args.profile)
+    r53_conn = boto.route53.connect_to_region(region, profile_name=args.profile)
+    s3_conn = boto.s3.connect_to_region(region, profile_name=args.profile)
+
+    if args.subcommand == 'list':
+        print(list_stacks(cf_conn, args.name, args.verbose))
+        cf_conn.close()
+
+    if args.subcommand == 'create' or args.subcommand == 'update':
+        config = load_config('config.yaml', args.env)
+        config['name'] = args.name
+        config['env'] = args.env
+        config['region'] = region
+        config['profile'] = args.profile
+        config['ec2_conn'] = ec2_conn
+        config['vpc_conn'] = vpc_conn
+        config['cf_conn'] = cf_conn
+        config['r53_conn'] = r53_conn
+        config['s3_conn'] = s3_conn
+        config['get_ami_id'] = get_ami_id
+        config['get_vpc_id'] = get_vpc_id
+        config['get_zone_id'] = get_zone_id
+        config['get_stack_output'] = get_stack_output
+        if args.subcommand == 'create':
+            if not args.name.startswith(args.env):
+                msg = 'Stack name does not begin with env name. Are you sure?? [y/N] '
+                response = input(msg)
+                if response not in YES:
+                    sys.exit(0)
+            create_stack(cf_conn, args.name, args.template, config, dry=args.dry_run)
+        else:
+            if not args.env:
+                config['env'] = get_stack_tag(cf_conn, args.name, 'Env')
+            create_stack(cf_conn, args.name, args.template, config, update=True, dry=args.dry_run)
+
+    if args.subcommand == 'delete':
+        delete_stack(cf_conn, args.name, region, args.profile)
+
+
+if __name__ == '__main__':
+    main()
