@@ -200,6 +200,7 @@ def list_stacks(conn, name_filter='*', verbose=False):
         'UPDATE_ROLLBACK_COMPLETE',
         'UPDATE_ROLLBACK_FAILED',
         'UPDATE_ROLLBACK_IN_PROGRESS',
+        'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
     ]
 
     s = conn.list_stacks(stacks_filters)
