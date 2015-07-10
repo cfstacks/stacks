@@ -92,7 +92,7 @@ def get_region_name(profile, config_file=AWS_CONFIG_FILE):
     '''Return region name from AWS config file'''
     try:
         c = botocore.config.load_config(config_file)
-        r = c.get(profile, {}).get('region', DEFAULT_REGION)
+        r = c.get("profiles",{}).get(profile, {}).get('region', DEFAULT_REGION)
         return r
     except:
         raise RuntimeError('Failed loading config {}'.format(config_file))
