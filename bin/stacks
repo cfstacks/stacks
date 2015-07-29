@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import os
+import os.path
 import sys
 import yaml
 import argparse
@@ -87,15 +88,18 @@ def load_config(config_file, env):
             return {}
 
 
-@throttling_retry
-def get_region_name(profile, config_file=AWS_CONFIG_FILE):
-    '''Return region name from AWS config file'''
-    try:
+def get_region_name(profile=DEFAULT_PROFILE, config_file=AWS_CONFIG_FILE):
+    '''Return region name
+
+    Use credentials file, otherwise return DEFAULT_REGION
+    '''
+    if 'AWS_DEFAULT_REGION' in os.environ:
+        return os.environ.get('AWS_DEFAULT_REGION')
+    elif os.path.isfile(config_file):
         c = botocore.config.load_config(config_file)
         r = c.get(profile, {}).get('region', DEFAULT_REGION)
         return r
-    except:
-        raise RuntimeError('Failed loading config {}'.format(config_file))
+    return DEFAULT_REGION
 
 
 @throttling_retry
