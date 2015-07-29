@@ -93,7 +93,9 @@ def get_region_name(profile=DEFAULT_PROFILE, config_file=AWS_CONFIG_FILE):
 
     Use credentials file, otherwise return DEFAULT_REGION
     '''
-    if os.path.isfile(config_file):
+    if 'AWS_DEFAULT_REGION' in os.environ:
+        return os.environ.get('AWS_DEFAULT_REGION')
+    elif os.path.isfile(config_file):
         c = botocore.config.load_config(config_file)
         r = c.get(profile, {}).get('region', DEFAULT_REGION)
         return r
