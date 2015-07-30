@@ -35,7 +35,6 @@ else:
 VERSION = '0.1'
 CONFIG_FILE = basedir + '/config.yaml'
 AWS_CONFIG_FILE = os.environ['HOME'] + '/.aws/credentials'
-DEFAULT_PROFILE = 'default'
 DEFAULT_REGION = 'us-east-1'
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
 
@@ -78,6 +77,11 @@ def _match_stack_name(name, pattern):
     return fnmatch(name, pattern)
 
 
+def _aws_config_file_present(file_name=AWS_CONFIG_FILE):
+    '''Checks whether AWS config file is present'''
+    return os.path.isfile(file_name)
+
+
 def load_config(config_file, env):
     '''Loads stack configuration file'''
     with open(config_file) as f:
@@ -88,14 +92,14 @@ def load_config(config_file, env):
             return {}
 
 
-def get_region_name(profile=DEFAULT_PROFILE, config_file=AWS_CONFIG_FILE):
+def get_region_name(profile, config_file=AWS_CONFIG_FILE):
     '''Return region name
 
     Use credentials file, otherwise return DEFAULT_REGION
     '''
     if 'AWS_DEFAULT_REGION' in os.environ:
         return os.environ.get('AWS_DEFAULT_REGION')
-    elif os.path.isfile(config_file):
+    elif _aws_config_file_present():
         c = botocore.config.load_config(config_file)
         r = c.get(profile, {}).get('region', DEFAULT_REGION)
         return r
@@ -263,7 +267,7 @@ def delete_stack(conn, name, region, profile):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--profile', default=DEFAULT_PROFILE)
+    parser.add_argument('-p', '--profile')
     parser.add_argument('-r', '--region')
     subparsers = parser.add_subparsers(title='available subcommands', dest='subcommand')
 
@@ -292,17 +296,23 @@ def main():
     if not args.subcommand:
         parser.print_help()
 
+    # set profile
+    if args.profile:
+        profile = args.profile
+    else:
+        profile = None
+
     # Set region name from cli arg or aws config file
     if args.region:
         region = args.region
-    elif get_region_name(args.profile):
-        region = get_region_name(args.profile)
+    elif get_region_name(profile):
+        region = get_region_name(profile)
 
-    ec2_conn = boto.ec2.connect_to_region(region, profile_name=args.profile)
-    vpc_conn = boto.vpc.connect_to_region(region, profile_name=args.profile)
-    cf_conn = boto.cloudformation.connect_to_region(region, profile_name=args.profile)
-    r53_conn = boto.route53.connect_to_region(region, profile_name=args.profile)
-    s3_conn = boto.s3.connect_to_region(region, profile_name=args.profile)
+    ec2_conn = boto.ec2.connect_to_region(region, profile_name=profile)
+    vpc_conn = boto.vpc.connect_to_region(region, profile_name=profile)
+    cf_conn = boto.cloudformation.connect_to_region(region, profile_name=profile)
+    r53_conn = boto.route53.connect_to_region(region, profile_name=profile)
+    s3_conn = boto.s3.connect_to_region(region, profile_name=profile)
 
     if args.subcommand == 'list':
         print(list_stacks(cf_conn, args.name, args.verbose))
@@ -313,7 +323,7 @@ def main():
         config['name'] = args.name
         config['env'] = args.env
         config['region'] = region
-        config['profile'] = args.profile
+        config['profile'] = profile
         config['ec2_conn'] = ec2_conn
         config['vpc_conn'] = vpc_conn
         config['cf_conn'] = cf_conn
@@ -336,7 +346,7 @@ def main():
             create_stack(cf_conn, args.name, args.template, config, update=True, dry=args.dry_run)
 
     if args.subcommand == 'delete':
-        delete_stack(cf_conn, args.name, region, args.profile)
+        delete_stack(cf_conn, args.name, region, profile)
 
 
 if __name__ == '__main__':
