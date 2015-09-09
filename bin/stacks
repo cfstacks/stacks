@@ -295,6 +295,7 @@ def main():
 
     if not args.subcommand:
         parser.print_help()
+        sys.exit(0)
 
     # set profile
     if args.profile:
