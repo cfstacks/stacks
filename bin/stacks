@@ -278,12 +278,14 @@ def main():
 
     parser_create = subparsers.add_parser('create', help='Create a new stack')
     parser_create.add_argument('-t', '--template', required=True, type=argparse.FileType())
+    parser_create.add_argument('-c', '--config', required=False, type=argparse.FileType())
     parser_create.add_argument('name')
     parser_create.add_argument('-e', '--env', required=True)
     parser_create.add_argument('-d', '--dry-run', action='store_true')
 
     parser_update = subparsers.add_parser('update', help='Update an existing stack')
     parser_update.add_argument('-t', '--template', required=True, type=argparse.FileType())
+    parser_update.add_argument('-c', '--config', required=False, type=argparse.FileType())
     parser_update.add_argument('name')
     parser_update.add_argument('-e', '--env', required=True)
     parser_update.add_argument('-d', '--dry-run', action='store_true')
@@ -320,7 +322,10 @@ def main():
         cf_conn.close()
 
     if args.subcommand == 'create' or args.subcommand == 'update':
-        config = load_config('config.yaml', args.env)
+        if args.config is not None:
+            config = load_config(args.config.name, args.env)
+        else:
+            config = load_config('config.yaml', args.env)
         config['name'] = args.name
         config['env'] = args.env
         config['region'] = region
