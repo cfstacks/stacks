@@ -12,13 +12,21 @@ delete and update stacks.
 
 ## Installation
 
-It is written in Python and you need to have python 3.4 installed. Stacks
-dependencies are very minimal and can be installed via pip3:
-`sudo pip3 install -r requirements.txt`.
+It is written in Python and you need to have python 3.x installed. Stacks
+dependencies are very minimal and can be installed via pip3 using virtualenv.
 
-To make it easier to find the tool, you can symlink it to your `~/bin/` or add
-`bin/` directory to your `${PATH}`. The tool figures out where it is being
-called from as long as you don't copy actual file away from `config.yaml`.
+```
+$ git clone https://github.com/State/stacks.git && cd stacks
+$ mkvirtualenv --python=python3 stacks
+$ pip install .
+```
+
+If you don't want to use virtualenv, then can just use pip3 to install stacks
+from git:
+
+```
+$ sudo pip3 install https://github.com/State/stacks.git
+```
 
 ## AWS Configuration
 
