@@ -1,11 +1,5 @@
 import os
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
-from setuptools import find_packages
+from setuptools import setup, find_packages
 
 base_dir = os.path.dirname(__file__)
 
@@ -27,6 +21,7 @@ config = {
         'boto>=2.38.0',
         'botocore>=1.1.1',
         'tabulate>=0.7.5',
+        'setuptools',
     ],
     'entry_points': {
         'console_scripts': [
