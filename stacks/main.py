@@ -39,6 +39,7 @@ def main():
                                required=False, type=argparse.FileType())
     parser_create.add_argument('name')
     parser_create.add_argument('-e', '--env', required=True)
+    parser_create.add_argument('-p', '--property', required=False, action='append')
     parser_create.add_argument('-d', '--dry-run', action='store_true')
 
     parser_update = subparsers.add_parser('update', help='Update an existing stack')
@@ -95,6 +96,15 @@ def main():
         config['get_vpc_id'] = get_vpc_id
         config['get_zone_id'] = get_zone_id
         config['get_stack_output'] = get_stack_output
+
+        properties = dict(p.split("=") for p in args.property)
+        invalid_properties = properties.keys() & config.keys()
+        if len(invalid_properties):
+            print('Reserved property names: {}'.format(','.join(invalid_properties)))
+            sys.exit(1)
+
+        config.update(properties)
+
         if args.subcommand == 'create':
             if not args.name.startswith(args.env):
                 msg = 'Stack name does not begin with env name. Are you sure?? [y/N] '
