@@ -115,3 +115,20 @@ qa5  CREATE_COMPLETE
 qa3  CREATE_COMPLETE
 ```
 
+## Development
+
+Please get involved in helping us improve stacks! It's very easy to get started.
+
+Before you make a change it's best to file the bug or feature as a [github issues](https://github.com/State/stacks/issues)
+so that no one else is working on a similar change.
+
+You can use pip to install stacks in editable mode. This means changes you make to the
+checkout will affect the global `stacks` command.
+
+```
+$ git clone https://github.com/State/stacks.git && cd stacks
+$ mkvirtualenv --python=python3 stacks
+$ pip -e install .
+```
+
+Once you've got a change please open a pull-request to master then we'll review and merge the change!
