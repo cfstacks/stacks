@@ -6,9 +6,23 @@ import hashlib
 import boto
 
 
+from jinja2 import meta
+
+
 def gen_template(template, config, pretty=False):
     '''Return generated CloudFormation template string'''
-    tpl = jinja2.Template(template.read())
+    tpl_str = template.read()
+
+    env = jinja2.Environment()
+    ast = env.parse(tpl_str)
+    required_properties = meta.find_undeclared_variables(ast)
+    missing_properties = required_properties - config.keys()
+
+    if len(missing_properties) > 0:
+        print('Requred properties not set: {}'.format(','.join(missing_properties)))
+        sys.exit(1)
+
+    tpl = jinja2.Template(tpl_str)
     out = tpl.render(config)
     yaml_out = yaml.load(out)
     indent = 2 if pretty else None
