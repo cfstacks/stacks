@@ -91,14 +91,14 @@ either in `common` section or per env. Configuration key name is
 
 ## Usage
 
-There is a help page which can be invoked on a subcommand as well: `bin/stacks create --help`.
+There is a help page which can be invoked on a subcommand as well: `stacks create --help`.
 
 ### Examples
 
 To list all the stacks from a profile `project-one` in us-east-1 (uses default
 from the aws config if not specified):
 ```bash
-$ bin/stacks --profile project-one --region us-east-1 list
+$ stacks --profile project-one --region us-east-1 list
 dev-infra           CREATE_COMPLETE
 dev-coreos          UPDATE_COMPLETE
 <..>
@@ -107,7 +107,7 @@ dev-coreos          UPDATE_COMPLETE
 List command takes a positional argument, which supports unix shell-style pattern
 matching as well:
 ```bash
-$ bin/stacks --region eu-west-1 list 'qa*'
+$ stacks --region eu-west-1 list 'qa*'
 qa2  CREATE_COMPLETE
 qa4  UPDATE_COMPLETE
 qa1  CREATE_COMPLETE
