@@ -25,7 +25,7 @@ If you don't want to use virtualenv, then can just use pip3 to install stacks
 from git:
 
 ```
-$ sudo pip3 install https://github.com/State/stacks.git
+$ sudo pip3 install git+https://github.com/State/stacks.git
 ```
 
 ## AWS Configuration
