@@ -25,7 +25,7 @@ If you don't want to use virtualenv, then can just use pip3 to install stacks
 from git:
 
 ```
-$ sudo pip3 install https://github.com/State/stacks.git
+$ sudo pip3 install git+https://github.com/State/stacks.git
 ```
 
 ## AWS Configuration
@@ -91,14 +91,14 @@ either in `common` section or per env. Configuration key name is
 
 ## Usage
 
-There is a help page which can be invoked on a subcommand as well: `bin/stacks create --help`.
+There is a help page which can be invoked on a subcommand as well: `stacks create --help`.
 
 ### Examples
 
 To list all the stacks from a profile `project-one` in us-east-1 (uses default
 from the aws config if not specified):
 ```bash
-$ bin/stacks --profile project-one --region us-east-1 list
+$ stacks --profile project-one --region us-east-1 list
 dev-infra           CREATE_COMPLETE
 dev-coreos          UPDATE_COMPLETE
 <..>
@@ -107,7 +107,7 @@ dev-coreos          UPDATE_COMPLETE
 List command takes a positional argument, which supports unix shell-style pattern
 matching as well:
 ```bash
-$ bin/stacks --region eu-west-1 list 'qa*'
+$ stacks --region eu-west-1 list 'qa*'
 qa2  CREATE_COMPLETE
 qa4  UPDATE_COMPLETE
 qa1  CREATE_COMPLETE
@@ -115,3 +115,20 @@ qa5  CREATE_COMPLETE
 qa3  CREATE_COMPLETE
 ```
 
+## Development
+
+Please get involved in helping us improve stacks! It's very easy to get started.
+
+Before you make a change it's best to file the bug or feature as a [github issues](https://github.com/State/stacks/issues)
+so that no one else is working on a similar change.
+
+You can use pip to install stacks in editable mode. This means changes you make to the
+checkout will affect the global `stacks` command.
+
+```
+$ git clone https://github.com/State/stacks.git && cd stacks
+$ mkvirtualenv --python=python3 stacks
+$ pip -e install .
+```
+
+Once you've got a change please open a pull-request to master then we'll review and merge the change!
