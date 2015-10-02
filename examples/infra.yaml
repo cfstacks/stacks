@@ -1,4 +1,11 @@
 ---
+metadata:
+  tags:
+  - key: Env
+    value: {{ env }}
+  - key: Foo
+    value: {{ bar }}
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Infrastructure stack
 Parameters:
