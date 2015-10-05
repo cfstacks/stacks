@@ -48,6 +48,7 @@ def main():
                                required=False, type=argparse.FileType())
     parser_update.add_argument('name')
     parser_update.add_argument('-e', '--env', required=True)
+    parser_update.add_argument('-p', '--property', required=False, action='append')
     parser_update.add_argument('-d', '--dry-run', action='store_true')
 
     parser_delete = subparsers.add_parser('delete', help='Delete an existing stack')
