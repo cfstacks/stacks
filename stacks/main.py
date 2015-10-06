@@ -48,6 +48,7 @@ def main():
                                required=False, type=argparse.FileType())
     parser_update.add_argument('name')
     parser_update.add_argument('-e', '--env', required=True)
+    parser_update.add_argument('-p', '--property', required=False, action='append')
     parser_update.add_argument('-d', '--dry-run', action='store_true')
 
     parser_delete = subparsers.add_parser('delete', help='Delete an existing stack')
@@ -97,13 +98,14 @@ def main():
         config['get_zone_id'] = get_zone_id
         config['get_stack_output'] = get_stack_output
 
-        properties = dict(p.split("=") for p in args.property)
-        invalid_properties = properties.keys() & config.keys()
-        if len(invalid_properties):
-            print('Reserved property names: {}'.format(','.join(invalid_properties)))
-            sys.exit(1)
+        if args.property:
+            properties = dict(p.split("=") for p in args.property)
+            invalid_properties = properties.keys() & config.keys()
+            if len(invalid_properties):
+                print('Reserved property names: {}'.format(','.join(invalid_properties)))
+                sys.exit(1)
 
-        config.update(properties)
+            config.update(properties)
 
         if args.subcommand == 'create':
             if not args.name.startswith(args.env):
