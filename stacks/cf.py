@@ -49,27 +49,32 @@ def list_stacks(conn, name_filter='*', verbose=False):
         return 'No stacks found'
 
 
-def create_stack(conn, name, template, config, update=False, dry=False):
+def create_stack(conn, name, stack_template, config, update=False, dry=False):
     '''Creates or updates CloudFormation stack from a jinja2 template'''
-    tags = {
-        'Env': config['env'],
-    }
+    tpl, options = gen_template(stack_template, config, dry)
 
-    tpl = gen_template(template, config, dry)
+    tags = {}
+    if options != None and options['metadata'] and options['metadata']['tags']:
+        for tag in options['metadata']['tags']:
+            tags[tag['key']] = tag['value']
+    else:
+        tags['Env'] = config['env']
+
     if dry:
         print(tpl)
         print("Template size: " + str(len(tpl)), file=sys.stderr)
+        print("Tags: " + ', '.join(["{}={}".format(k,v) for (k,v) in tags.items()]), file=sys.stderr)
         return True
+    else:
+        url = upload_template(conn, config, tpl, name)
 
-    url = upload_template(conn, config, tpl, name)
-
-    try:
-        if update:
-            conn.update_stack(name, template_url=url, tags=tags, capabilities=['CAPABILITY_IAM'])
-        else:
-            conn.create_stack(name, template_url=url, tags=tags, capabilities=['CAPABILITY_IAM'])
-    except BotoServerError as err:
-        print(err)
+        try:
+            if update:
+                conn.update_stack(name, template_url=url, tags=tags, capabilities=['CAPABILITY_IAM'])
+            else:
+                conn.create_stack(name, template_url=url, tags=tags, capabilities=['CAPABILITY_IAM'])
+        except BotoServerError as err:
+            print(err)
 
 
 def delete_stack(conn, name, region, profile):

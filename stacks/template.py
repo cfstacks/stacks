@@ -24,9 +24,13 @@ def gen_template(template, config, pretty=False):
 
     tpl = jinja2.Template(tpl_str)
     out = tpl.render(config)
-    yaml_out = yaml.load(out)
+    docs = list(yaml.load_all(out))
     indent = 2 if pretty else None
-    return json.dumps(yaml_out, indent=indent)
+
+    if len(docs) == 2:
+        return (json.dumps(docs[1], indent=indent), docs[0])
+    else:
+        return (json.dumps(docs[0], indent=indent), None)
 
 
 def upload_template(conn, config, tpl, name):

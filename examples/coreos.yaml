@@ -1,6 +1,13 @@
 ---
+metadata:
+  tags:
+  - key: Env
+    value: {{ env }}
+  - key: Foo
+    value: {{ bar }}
+---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CoreOS Cluster Stack in {{ environment }} environment
+Description: CoreOS Cluster Stack in {{ env }} environment
 Resources:
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
