@@ -1,5 +1,8 @@
 import sys
 import argparse
+import time
+
+from tabulate import tabulate
 
 import boto.ec2
 import boto.vpc
@@ -18,6 +21,7 @@ from .aws import get_stack_output
 from .cf import list_stacks
 from .cf import create_stack
 from .cf import delete_stack
+from .cf import list_stack_events
 
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
 
@@ -53,6 +57,10 @@ def main():
 
     parser_delete = subparsers.add_parser('delete', help='Delete an existing stack')
     parser_delete.add_argument('name')
+
+    parser_events = subparsers.add_parser('events', help='List events from a stack')
+    parser_events.add_argument('name')
+    parser_events.add_argument('-f', '--follow', action='store_true', help='Poll for new events until stopped')
 
     args = parser.parse_args()
 
@@ -121,3 +129,26 @@ def main():
 
     if args.subcommand == 'delete':
         delete_stack(cf_conn, args.name, region, profile)
+
+    if args.subcommand == 'events':
+        poll = True
+        ids = set()
+        while poll:
+            events = list_stack_events(cf_conn, args.name, region, profile)
+            events_display = [(
+                    event.timestamp,
+                    event.resource_status,
+                    event.resource_type,
+                    event.logical_resource_id,
+                    event.resource_status_reason)
+                    for event in events if event.event_id not in ids]
+            ids |= set([event.event_id for event in events])
+
+            if len(events_display) >= 1:
+                print(tabulate(reversed(events_display), tablefmt='plain'))
+
+            poll = args.follow
+            if poll:
+                time.sleep(1)
+            elif len(events_display) == 0:
+                print('No events found')

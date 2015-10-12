@@ -128,7 +128,7 @@ checkout will affect the global `stacks` command.
 ```
 $ git clone https://github.com/State/stacks.git && cd stacks
 $ mkvirtualenv --python=python3 stacks
-$ pip -e install .
+$ pip install -e .
 ```
 
 Once you've got a change please open a pull-request to master then we'll review and merge the change!

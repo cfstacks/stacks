@@ -87,3 +87,10 @@ def delete_stack(conn, name, region, profile):
     response = input('Are you sure? [y/N] ')
     if response in YES:
         conn.delete_stack(name)
+
+def list_stack_events(conn, name, region, profile):
+    events = conn.describe_stack_events(name)
+
+    # ToDo add support for next token
+
+    return events
