@@ -3,6 +3,14 @@
 CloudFormation stacks management tool. It can generate templates, list, create,
 delete and update stacks.
 
+  - [Features](#features)
+  - [Installation](#installation)
+  - [AWS Configuration](#aws-configuration)
+  - [Stacks Templates](#stacks-templates)
+  - [Usage](#usage)
+  - [Powered By](#powered-by)
+  - [Development](#development)
+
 ## Features
 
 - Templated YAML in jinja2
@@ -114,6 +122,12 @@ qa1  CREATE_COMPLETE
 qa5  CREATE_COMPLETE
 qa3  CREATE_COMPLETE
 ```
+
+## Powered By
+
+| User | Usage |
+| --- | ---- |
+| [State.com](https://state.com) | State created stacks to make CloudFormation templates easier to work but without hidden magic. We use stacks to manage all of our internal AWS resources. |
 
 ## Development
 
