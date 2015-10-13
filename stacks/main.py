@@ -1,6 +1,7 @@
 import sys
 import argparse
 import time
+import signal
 
 from tabulate import tabulate
 
@@ -25,8 +26,15 @@ from .cf import list_stack_events
 
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
 
+def handler(signum = None, frame = None):
+    print('Stopping.')
+    sys.exit(0)
+
 
 def main():
+    for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
+        signal.signal(sig, handler)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--profile')
     parser.add_argument('-r', '--region')
