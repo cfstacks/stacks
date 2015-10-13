@@ -1,6 +1,7 @@
 import sys
 import argparse
 import time
+import signal
 
 from tabulate import tabulate
 
@@ -25,8 +26,15 @@ from .cf import list_stack_events
 
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
 
+def handler(signum = None, frame = None):
+    print('Stopping.')
+    sys.exit(0)
+
 
 def main():
+    for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
+        signal.signal(sig, handler)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--profile')
     parser.add_argument('-r', '--region')
@@ -61,6 +69,7 @@ def main():
     parser_events = subparsers.add_parser('events', help='List events from a stack')
     parser_events.add_argument('name')
     parser_events.add_argument('-f', '--follow', action='store_true', help='Poll for new events until stopped')
+    parser_events.add_argument('-n', '--lines', default='10', type=int)
 
     args = parser.parse_args()
 
@@ -132,6 +141,7 @@ def main():
 
     if args.subcommand == 'events':
         poll = True
+        first = True
         ids = set()
         while poll:
             events = list_stack_events(cf_conn, args.name, region, profile)
@@ -144,9 +154,13 @@ def main():
                     for event in events if event.event_id not in ids]
             ids |= set([event.event_id for event in events])
 
+            if first:
+                events_display = events_display[:args.lines]
+
             if len(events_display) >= 1:
                 print(tabulate(reversed(events_display), tablefmt='plain'))
 
+            first = False
             poll = args.follow
             if poll:
                 time.sleep(1)
