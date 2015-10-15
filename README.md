@@ -16,7 +16,7 @@ It is written in Python and you need to have python 3.x installed. Stacks
 dependencies are very minimal and can be installed via pip3 using virtualenv.
 
 ```
-$ git clone https://github.com/State/stacks.git && cd stacks
+$ git clone https://github.com/cfstacks/stacks.git && cd stacks
 $ mkvirtualenv --python=python3 stacks
 $ pip install .
 ```
@@ -25,7 +25,7 @@ If you don't want to use virtualenv, then can just use pip3 to install stacks
 from git:
 
 ```
-$ sudo pip3 install git+https://github.com/State/stacks.git
+$ sudo pip3 install git+https://github.com/cfstacks/stacks.git
 ```
 
 ## AWS Configuration
@@ -119,14 +119,14 @@ qa3  CREATE_COMPLETE
 
 Please get involved in helping us improve stacks! It's very easy to get started.
 
-Before you make a change it's best to file the bug or feature as a [github issues](https://github.com/State/stacks/issues)
+Before you make a change it's best to file the bug or feature as a [github issues](https://github.com/cfstacks/stacks/issues)
 so that no one else is working on a similar change.
 
 You can use pip to install stacks in editable mode. This means changes you make to the
 checkout will affect the global `stacks` command.
 
 ```
-$ git clone https://github.com/State/stacks.git && cd stacks
+$ git clone https://github.com/cfstacks/stacks.git && cd stacks
 $ mkvirtualenv --python=python3 stacks
 $ pip install -e .
 ```
