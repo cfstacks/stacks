@@ -35,7 +35,11 @@ def gen_template(template, config, pretty=False):
 
 def upload_template(conn, config, tpl, name):
     '''Uploads a template to S3 bucket and returns S3 key url'''
-    bn = config.get('templates_bucket_name', '{}-stacks-{}'.format(config['env'], config['region']))
+
+    bucket_prefix = config.get('templates_bucket_name_prefix')
+    default_bucket_name = '{}-stacks-{}'.format(config['env'], config['region'])
+
+    bn = config.get('templates_bucket_name', '-'.join(filter(None, (bucket_prefix, default_bucket_name))))
 
     try:
         b = config['s3_conn'].get_bucket(bn)
