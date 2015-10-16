@@ -84,10 +84,14 @@ Templates do not enforce stack naming convention, but a desired convention is
 to prefix stack names with env name.
 
 CloudFormation API has a template size limit. Instead of submiting templates
-over the API, we first upload them to S3 and then provide an https url. For
-that to work you must have an S3 bucket created and specified in `config.yaml`,
-either in `common` section or per env. Configuration key name is
-`templates_bucket_name`.
+over the API, we first upload them to S3 and then provide an https url. 
+
+ASG templates S3 bucket can be specified in config (key name: `templates_bucket_name`), 
+either in `common` section or per env.
+If `templates_bucket_name` is not present in configuration, bucket name will be constructed automatically 
+as `{env}-stacks-{region}` e.g. `dev-stacks-us-east-1`. You may also specify a custom prefix 
+(config key: `templates_bucket_name_prefix`) to construct the following bucket name: 
+`{prefix}-{env}-stacks-{region}` e.g. `myprefix-dev-stacks-eu-east-1`.
 
 ## Usage
 
