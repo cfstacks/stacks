@@ -1,44 +1,70 @@
-import os
+import sys
 import os.path
+import yaml
 import botocore.config
 
-from .utils import load_yaml
-
 AWS_CONFIG_FILE = os.environ['HOME'] + '/.aws/credentials'
-DEFAULT_REGION = 'us-east-1'
+RESERVED_PROPERTIES = ['region', 'profile', 'env']
 
 
-def merge_config(config, env):
-    '''Merges config common with environment specific section'''
-    c = config['common'].copy()
-    c.update(config[env])
+def config_load(env, config_file=None):
+    '''Load stack configuration file'''
+    c = _load_yaml(config_file)
+    config = {}
+    if c:
+        merged = _merge(c, env)
+        config.update(merged)
+    else:
+        config.update({})
+
+    config['env'] = env
+    return config
+
+
+def _merge(config, env):
+    if set(('common', env)) <= set(config):
+        c = config['common'].copy()
+        c.update(config[env])
+    elif env in config.keys():
+        c = config[env]
+    elif 'common' in config.keys():
+        c = config['common']
     return c
 
 
-def _aws_config_file_present(file_name=AWS_CONFIG_FILE):
-    '''Checks whether AWS config file is present'''
-    return os.path.isfile(file_name)
+def _load_yaml(fname):
+    try:
+        with open(fname) as f:
+            y = yaml.load(f)
+            return y
+    except:
+        return None
 
 
-def load_config(config_file, env):
-    '''Loads stack configuration file'''
-    with open(config_file) as f:
-        c = load_yaml(f)
-        if c:
-            return merge_config(c, env)
-        else:
-            return {}
+def get_region_name(profile):
+    '''Get region name from AWS_CONFIG_FILE
 
-
-def get_region_name(profile, config_file=AWS_CONFIG_FILE):
-    '''Return region name
-
-    Use credentials file, otherwise return DEFAULT_REGION
+    Return region name
     '''
-    if 'AWS_DEFAULT_REGION' in os.environ:
-        return os.environ.get('AWS_DEFAULT_REGION')
-    elif _aws_config_file_present():
-        c = botocore.config.load_config(config_file)
-        r = c.get(profile, {}).get('region', DEFAULT_REGION)
+    if os.path.isfile(AWS_CONFIG_FILE):
+        c = botocore.config.load_config(AWS_CONFIG_FILE)
+        r = c.get(profile, {}).get('region')
         return r
-    return DEFAULT_REGION
+    return None
+
+
+def check_profile_exists(profile):
+    '''Return True if profile exists in AWS_CONFIG_FILE'''
+    if os.path.isfile(AWS_CONFIG_FILE):
+        c = botocore.config.load_config(AWS_CONFIG_FILE)
+        return True if profile in c.keys() else False
+    return False
+
+
+def validate_properties(props_arg):
+    properties = dict(p.split('=') for p in props_arg)
+    reserved = [i for i in RESERVED_PROPERTIES if i in properties.keys()]
+    if len(reserved):
+        print('Unable to override reserved properties: {}'.format(','.join(reserved)))
+        sys.exit(1)
+    return properties

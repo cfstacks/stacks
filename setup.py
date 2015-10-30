@@ -16,6 +16,7 @@ config = {
     'version': about['__version__'],
     'packages': find_packages(),
     'install_requires': [
+        'configargparse>=0.9.3',
         'PyYAML>=3.11',
         'Jinja2>=2.7.3',
         'boto>=2.38.0',
