@@ -1,5 +1,6 @@
 ---
 metadata:
+  name: {{ env }}-coreos
   tags:
   - key: Env
     value: {{ env }}
