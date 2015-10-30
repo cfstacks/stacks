@@ -3,7 +3,7 @@ import os.path
 import yaml
 import botocore.config
 
-AWS_CONFIG_FILE = os.environ['HOME'] + '/.aws/credentials'
+AWS_CONFIG_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
 RESERVED_PROPERTIES = ['region', 'profile', 'env']
 
 
