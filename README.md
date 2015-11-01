@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/cfstacks/stacks.svg?branch=master)](https://travis-ci.org/cfstacks/stacks)
+
 # stacks
 
 CloudFormation stacks management tool. It can generate templates, list, create,
