@@ -1,5 +1,6 @@
 ---
 metadata:
+  name: {{ env }}-infra
   tags:
   - key: Env
     value: {{ env }}
