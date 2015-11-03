@@ -9,7 +9,7 @@ def parse_options():
     '''
     parser = configargparse.ArgumentParser()
     parser.add_argument('-p', '--profile', env_var='AWS_DEFAULT_PROFILE', default='default')
-    parser.add_argument('-r', '--region', env_var='AWS_DEFAULT_REGION', required=True)
+    parser.add_argument('-r', '--region', env_var='AWS_DEFAULT_REGION', required=False)
     subparsers = parser.add_subparsers(title='available subcommands', dest='subcommand')
 
     parser_list = subparsers.add_parser('list', help='List stacks')
