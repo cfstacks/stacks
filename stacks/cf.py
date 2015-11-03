@@ -10,6 +10,7 @@ import jinja2
 import hashlib
 import boto
 
+from os import path
 from jinja2 import meta
 from fnmatch import fnmatch
 from tabulate import tabulate
@@ -43,15 +44,16 @@ IN_PROGRESS_STACK_STATES = [
 ]
 
 
-def gen_template(template, config, pretty=False):
+def gen_template(tpl_file, config, pretty=False):
     '''Return generated CloudFormation template string'''
-    tpl_str = template.read()
+    tpl_path, tpl_fname = path.split(tpl_file.name)
+    env = _new_jinja_env(tpl_path)
 
-    _check_missing_vars(tpl_str, config)
+    _check_missing_vars(env, tpl_file, config)
 
-    tpl = jinja2.Template(tpl_str)
-    out = tpl.render(config)
-    docs = list(yaml.load_all(out))
+    tpl = env.get_template(tpl_fname)
+    rendered = tpl.render(config)
+    docs = list(yaml.load_all(rendered))
     indent = 2 if pretty else None
 
     if len(docs) == 2:
@@ -60,9 +62,9 @@ def gen_template(template, config, pretty=False):
         return (json.dumps(docs[0], indent=indent), None)
 
 
-def _check_missing_vars(tpl_str, config):
+def _check_missing_vars(env, tpl_file, config):
     '''Check for missing variables in a template string'''
-    env = jinja2.Environment()
+    tpl_str = tpl_file.read()
     ast = env.parse(tpl_str)
     required_properties = meta.find_undeclared_variables(ast)
     missing_properties = required_properties - config.keys()
@@ -70,6 +72,12 @@ def _check_missing_vars(tpl_str, config):
     if len(missing_properties) > 0:
         print('Requred properties not set: {}'.format(','.join(missing_properties)))
         sys.exit(1)
+
+
+def _new_jinja_env(tpl_path):
+    loader = jinja2.loaders.FileSystemLoader(tpl_path)
+    env = jinja2.Environment(loader=loader)
+    return env
 
 
 # TODO(vaijab): fix 'S3ResponseError: 301 Moved Permanently', this happens when
