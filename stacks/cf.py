@@ -1,7 +1,6 @@
 '''
 Cloudformation related functions
 '''
-
 import sys
 import time
 import yaml
@@ -57,9 +56,9 @@ def gen_template(tpl_file, config, pretty=False):
     indent = 2 if pretty else None
 
     if len(docs) == 2:
-        return (json.dumps(docs[1], indent=indent), docs[0])
+        return (json.dumps(docs[1], indent=indent, sort_keys=True), docs[0])
     else:
-        return (json.dumps(docs[0], indent=indent), None)
+        return (json.dumps(docs[0], indent=indent, sort_keys=True), None)
 
 
 def _check_missing_vars(env, tpl_file, config):
@@ -96,7 +95,7 @@ def upload_template(conn, config, tpl, stack_name):
             print(err)
         sys.exit(1)
 
-    h = hashlib.md5(tpl.encode('utf-8')).hexdigest()
+    h = _calc_md5(tpl)
     k = boto.s3.key.Key(b)
     k.key = '{}/{}/{}'.format(config['env'], stack_name, h)
     k.set_contents_from_string(tpl)
@@ -135,8 +134,13 @@ def create_stack(conn, stack_name, stack_template, config, update=False, dry=Fal
     '''Creates or updates CloudFormation stack from a jinja2 template'''
     tpl, options = gen_template(stack_template, config, dry)
 
-    tags = {'Env': config['env']}
+    # Set Env and MD5Sum tags by default, which cannot be overwritten
+    tags = {
+        'Env': config['env'],
+        'MD5Sum': _calc_md5(tpl)
+    }
 
+    extracted_name = None
     if options:
         tags.update(_extract_tags(options))
         extracted_name = _extract_name(options)
@@ -177,6 +181,8 @@ def _extract_tags(options):
         for tag in metadata['tags']:
             if tag['key'] == 'Env':
                 continue
+            if tag['key'] == 'MD5Sum':
+                continue
             tags[tag['key']] = tag['value']
     return tags
 
@@ -187,6 +193,11 @@ def _extract_name(options):
         metadata = options.get('metadata')
 
     return metadata.get('name')
+
+
+def _calc_md5(j):
+    '''Calculate an MD5 hash of a json string'''
+    return hashlib.md5(j.encode()).hexdigest()
 
 
 def delete_stack(conn, stack_name, region, profile):
