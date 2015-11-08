@@ -130,27 +130,29 @@ def list_stacks(conn, name_filter='*', verbose=False):
     return None
 
 
-def create_stack(conn, stack_name, stack_template, config, update=False, dry=False):
+def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False):
     '''Create or update CloudFormation stack from a jinja2 template'''
-    tpl, options = gen_template(stack_template, config)
+    tpl, metadata = gen_template(tpl_file, config)
 
-    # Set Env and MD5Sum tags by default, which cannot be overwritten
-    tags = {
+    # Set default tags which cannot be overwritten
+    default_tags = {
         'Env': config['env'],
         'MD5Sum': _calc_md5(tpl)
     }
 
-    extracted_name = None
-    if options:
-        tags.update(_extract_tags(options))
-        extracted_name = _extract_name(options)
+    if metadata:
+        tags = _extract_tags(metadata)
+        print(tags)
+        tags.update(default_tags)
+        name_from_metadata = metadata.get('name')
+        disable_rollback = metadata.get('disable_rollback')
 
     if stack_name:
         sn = stack_name
-    elif extracted_name:
-        sn = extracted_name
+    elif name_from_metadata:
+        sn = name_from_metadata
     else:
-        print('Stack name must be specified via command line argument or template metadata.')
+        print('Stack name must be specified via command line argument or stack metadata.')
         sys.exit(1)
 
     if dry:
@@ -164,26 +166,23 @@ def create_stack(conn, stack_name, stack_template, config, update=False, dry=Fal
 
     try:
         if update:
-            conn.update_stack(sn, template_url=url, tags=tags, capabilities=['CAPABILITY_IAM'])
+            conn.update_stack(sn, template_url=url, tags=tags,
+                              capabilities=['CAPABILITY_IAM'],
+                              disable_rollback=disable_rollback)
         else:
-            conn.create_stack(sn, template_url=url, tags=tags, capabilities=['CAPABILITY_IAM'])
+            conn.create_stack(sn, template_url=url, tags=tags,
+                              capabilities=['CAPABILITY_IAM'],
+                              disable_rollback=disable_rollback)
     except BotoServerError as err:
         print(err.message)
 
 
-def _extract_tags(options):
-    '''Return tags from template options metadata'''
+def _extract_tags(metadata):
+    '''Return tags from a metadata'''
     tags = {}
-    if options.get('metadata'):
-        metadata = options.get('metadata')
 
-    if metadata.get('tags'):
-        for tag in metadata['tags']:
-            if tag['key'] == 'Env':
-                continue
-            if tag['key'] == 'MD5Sum':
-                continue
-            tags[tag['key']] = tag['value']
+    for tag in metadata.get('tags', []):
+        tags[tag['key']] = tag['value']
     return tags
 
 
