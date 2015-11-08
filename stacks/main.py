@@ -1,3 +1,6 @@
+# An attempt to support python 2.7.x
+from __future__ import print_function
+
 import sys
 import signal
 
@@ -41,12 +44,9 @@ def main():
     r53_conn = boto.route53.connect_to_region(region, profile_name=args.profile)
     s3_conn = boto.s3.connect_to_region(region, profile_name=args.profile)
 
-    config_file = None
-    if 'config' in args:
-        config_file = args.config
-    env = None
-    if 'env' in args:
-        env = args.env
+    config_file = vars(args).get('config', None)
+    env = vars(args).get('env', None)
+
     config = config_load(env, config_file)
     config['region'] = region
     config['ec2_conn'] = ec2_conn
@@ -60,7 +60,9 @@ def main():
     config['get_stack_output'] = aws.get_stack_output
 
     if args.subcommand == 'list':
-        print(cf.list_stacks(cf_conn, args.name, args.verbose))
+        output = cf.list_stacks(cf_conn, args.name, args.verbose)
+        if output:
+            print(output)
         cf_conn.close()
 
     if args.subcommand == 'create' or args.subcommand == 'update':
@@ -69,9 +71,11 @@ def main():
             config.update(properties)
 
         if args.subcommand == 'create':
-            cf.create_stack(cf_conn, args.name, args.template, config, dry=args.dry_run)
+            cf.create_stack(cf_conn, args.name, args.template, config,
+                            update=args.update, dry=args.dry_run)
         else:
-            cf.create_stack(cf_conn, args.name, args.template, config, update=True, dry=args.dry_run)
+            cf.create_stack(cf_conn, args.name, args.template, config,
+                            update=True, dry=args.dry_run)
 
     if args.subcommand == 'delete':
         cf.delete_stack(cf_conn, args.name, region, args.profile)
