@@ -1,0 +1,21 @@
+---
+metadata:
+  name: {{ env }}-test-stack
+  tags:
+  - key: Test
+    value: {{ test_tag }}
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Test Stack
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.50.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: {{ env }}-test-vpc
+        - Key: Env
+          Value: {{ env }}

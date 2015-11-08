@@ -1,0 +1,14 @@
+  - key: Test
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.50.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: {{ env }}-test-vpc
+        - Key: Env
+          Value: {{ env }}
+
