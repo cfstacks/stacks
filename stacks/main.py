@@ -72,16 +72,19 @@ def main():
 
         if args.subcommand == 'create':
             cf.create_stack(cf_conn, args.name, args.template, config,
-                            update=args.update, dry=args.dry_run)
+                            dry=args.dry_run, follow=args.events_follow)
         else:
             cf.create_stack(cf_conn, args.name, args.template, config,
-                            update=True, dry=args.dry_run)
+                            update=True, dry=args.dry_run,
+                            follow=args.events_follow, create_on_update=args.create_on_update)
 
     if args.subcommand == 'delete':
         cf.delete_stack(cf_conn, args.name, region, args.profile)
+        if args.events_follow:
+            cf.get_events(cf_conn, args.name, args.events_follow, 10)
 
     if args.subcommand == 'events':
-        cf.get_events(cf_conn, args.name, args.follow, args.lines)
+        cf.get_events(cf_conn, args.name, args.events_follow, args.lines)
 
 
 def handler(signum, frame):
