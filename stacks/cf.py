@@ -130,7 +130,8 @@ def list_stacks(conn, name_filter='*', verbose=False):
     return None
 
 
-def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False):
+def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
+                 follow=False, create_on_update=False):
     '''Create or update CloudFormation stack from a jinja2 template'''
     tpl, metadata = gen_template(tpl_file, config)
 
@@ -142,7 +143,6 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False):
 
     if metadata:
         tags = _extract_tags(metadata)
-        print(tags)
         tags.update(default_tags)
         name_from_metadata = metadata.get('name')
         disable_rollback = metadata.get('disable_rollback')
@@ -165,7 +165,11 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False):
     url = upload_template(conn, config, tpl, sn)
 
     try:
-        if update:
+        if update and create_on_update and not stack_exists(conn, sn):
+            conn.create_stack(sn, template_url=url, tags=tags,
+                              capabilities=['CAPABILITY_IAM'],
+                              disable_rollback=disable_rollback)
+        elif update:
             conn.update_stack(sn, template_url=url, tags=tags,
                               capabilities=['CAPABILITY_IAM'],
                               disable_rollback=disable_rollback)
@@ -173,6 +177,8 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False):
             conn.create_stack(sn, template_url=url, tags=tags,
                               capabilities=['CAPABILITY_IAM'],
                               disable_rollback=disable_rollback)
+        if follow:
+            get_events(conn, sn, follow, 10)
     except BotoServerError as err:
         print(err.message)
 
@@ -184,14 +190,6 @@ def _extract_tags(metadata):
     for tag in metadata.get('tags', []):
         tags[tag['key']] = tag['value']
     return tags
-
-
-def _extract_name(options):
-    '''Return stack name from template options metadata'''
-    if options.get('metadata'):
-        metadata = options.get('metadata')
-
-    return metadata.get('name')
 
 
 def _calc_md5(j):
@@ -216,7 +214,7 @@ def delete_stack(conn, stack_name, region, profile):
             sys.exit(0)
 
 
-def get_events(conn, stack_name, follow, lines):
+def get_events(conn, stack_name, follow, lines=None):
     '''Get stack events in chronological order
 
     Prints tabulated list of events in chronological order
@@ -264,3 +262,12 @@ def get_stack_status(conn, stack_name):
         if s.stack_name == stack_name:
             return s.stack_status
     return None
+
+
+def stack_exists(conn, stack_name):
+    '''Check whether stack_name exists.'''
+    try:
+        conn.describe_stacks(stack_name)
+        return True
+    except BotoServerError:
+        return False
