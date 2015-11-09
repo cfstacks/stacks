@@ -155,27 +155,34 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
         print('Stack name must be specified via command line argument or stack metadata.')
         sys.exit(1)
 
+    tpl_size = len(tpl)
+
     if dry:
         print(tpl)
         print('Name: {}'.format(sn), file=sys.stderr)
         print('Tags: ' + ', '.join(['{}={}'.format(k, v) for (k, v) in tags.items()]), file=sys.stderr)
-        print("Template size: " + str(len(tpl)), file=sys.stderr)
+        print('Template size:', tpl_size, file=sys.stderr)
         return True
 
-    url = upload_template(conn, config, tpl, sn)
+    if tpl_size > 51200:
+        tpl_url = upload_template(conn, config, tpl, sn)
+        tpl_body = None
+    else:
+        tpl_url = None
+        tpl_body = tpl
 
     try:
         if update and create_on_update and not stack_exists(conn, sn):
-            conn.create_stack(sn, template_url=url, tags=tags,
-                              capabilities=['CAPABILITY_IAM'],
+            conn.create_stack(sn, template_url=tpl_url, template_body=tpl_body,
+                              tags=tags, capabilities=['CAPABILITY_IAM'],
                               disable_rollback=disable_rollback)
         elif update:
-            conn.update_stack(sn, template_url=url, tags=tags,
-                              capabilities=['CAPABILITY_IAM'],
+            conn.update_stack(sn, template_url=tpl_url, template_body=tpl_body,
+                              tags=tags, capabilities=['CAPABILITY_IAM'],
                               disable_rollback=disable_rollback)
         else:
-            conn.create_stack(sn, template_url=url, tags=tags,
-                              capabilities=['CAPABILITY_IAM'],
+            conn.create_stack(sn, template_url=tpl_url, template_body=tpl_body,
+                              tags=tags, capabilities=['CAPABILITY_IAM'],
                               disable_rollback=disable_rollback)
         if follow:
             get_events(conn, sn, follow, 10)
