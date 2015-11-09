@@ -1,6 +1,8 @@
 import os.path
 import configargparse
 
+from stacks import __about__
+
 
 def parse_options():
     '''Handle command-line options
@@ -10,6 +12,7 @@ def parse_options():
     parser = configargparse.ArgumentParser()
     parser.add_argument('-p', '--profile', env_var='AWS_DEFAULT_PROFILE', default='default')
     parser.add_argument('-r', '--region', env_var='AWS_DEFAULT_REGION', required=False)
+    parser.add_argument('--version', action='version', version=__about__.__version__)
     subparsers = parser.add_subparsers(title='available subcommands', dest='subcommand')
 
     parser_list = subparsers.add_parser('list', help='List stacks')
