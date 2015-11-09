@@ -1,0 +1,16 @@
+---
+# MD5Sum of json object is b08c2e9d7003f62ba8ffe5c985c50a63
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Infrastructure stack
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.50.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: {{ env }}-vpc
+      - Key: Env
+        Value: {{ env }}

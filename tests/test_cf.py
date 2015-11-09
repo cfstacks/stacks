@@ -1,7 +1,6 @@
 import unittest
 import boto
 from moto import mock_cloudformation
-from moto import mock_s3
 
 from stacks import cf
 
@@ -42,21 +41,35 @@ class TestStackActions(unittest.TestCase):
         }
         self.config['cf_conn'] = boto.cloudformation.connect_to_region(self.config['region'])
         self.config['s3_conn'] = boto.s3.connect_to_region(self.config['region'])
-        self.tpl_file = open('tests/fixtures/create_stack_template.yaml')
 
-    @mock_s3
     @mock_cloudformation
     def test_create_stack(self):
-        # Create a mock bucket within the same context, otherwise that should be
-        # done in setUp()
-        self.config['s3_conn'].create_bucket('unittest-stacks-us-east-1')
         stack_name = None
-        cf.create_stack(self.config['cf_conn'], stack_name, self.tpl_file, self.config)
+        with open('tests/fixtures/create_stack_template.yaml') as tpl_file:
+            cf.create_stack(self.config['cf_conn'], stack_name, tpl_file, self.config)
 
         stack = self.config['cf_conn'].describe_stacks('unittest-infra')[0]
         self.assertEqual('unittest-infra', stack.stack_name)
         self.assertEqual(self.config['env'], stack.tags['Env'])
         self.assertEqual(self.config['custom_tag'], stack.tags['Test'])
+        self.assertEqual('b08c2e9d7003f62ba8ffe5c985c50a63', stack.tags['MD5Sum'])
+
+    @mock_cloudformation
+    def test_create_stack_no_stack_name(self):
+        stack_name = None
+        with open('tests/fixtures/no_metadata_template.yaml') as tpl_file:
+            with self.assertRaises(SystemExit) as err:
+                cf.create_stack(self.config['cf_conn'], stack_name, tpl_file, self.config)
+            self.assertEqual(err.exception.code, 1)
+
+    @mock_cloudformation
+    def test_create_stack_no_metadata(self):
+        stack_name = 'my-stack'
+        with open('tests/fixtures/no_metadata_template.yaml') as tpl_file:
+            cf.create_stack(self.config['cf_conn'], stack_name, tpl_file, self.config)
+        stack = self.config['cf_conn'].describe_stacks('my-stack')[0]
+        self.assertEqual('my-stack', stack.stack_name)
+        self.assertEqual(self.config['env'], stack.tags['Env'])
         self.assertEqual('b08c2e9d7003f62ba8ffe5c985c50a63', stack.tags['MD5Sum'])
 
 
