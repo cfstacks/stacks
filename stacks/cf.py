@@ -146,6 +146,10 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
         tags.update(default_tags)
         name_from_metadata = metadata.get('name')
         disable_rollback = metadata.get('disable_rollback')
+    else:
+        name_from_metadata = None
+        tags = default_tags
+        disable_rollback = None
 
     if stack_name:
         sn = stack_name
