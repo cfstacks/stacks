@@ -1,0 +1,7 @@
+---
+common:
+  foo: bar
+  vpc_name: myvpc
+
+myenv:
+  foo: 'foo-value-in-myenv'

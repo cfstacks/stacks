@@ -29,6 +29,8 @@ def _merge(config, env):
         c = config[env]
     elif 'common' in config.keys():
         c = config['common']
+    else:
+        c = config
     return c
 
 
