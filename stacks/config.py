@@ -48,7 +48,10 @@ def get_region_name(profile):
     '''
     if os.path.isfile(AWS_CONFIG_FILE):
         c = botocore.config.load_config(AWS_CONFIG_FILE)
-        r = c.get(profile, {}).get('region')
+        if profile == 'default':
+            r = c['profiles'].get('default', {}).get('region')
+        else:
+            r = c.get(profile, {}).get('region')
         return r
     return None
 
@@ -57,7 +60,10 @@ def check_profile_exists(profile):
     '''Return True if profile exists in AWS_CONFIG_FILE'''
     if os.path.isfile(AWS_CONFIG_FILE):
         c = botocore.config.load_config(AWS_CONFIG_FILE)
-        return True if profile in c.keys() else False
+        if profile == 'default':
+            return True if 'default' in c['profiles'].keys() else False
+        else:
+            return True if profile in c.keys() else False
     return False
 
 
