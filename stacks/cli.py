@@ -34,7 +34,7 @@ def parse_options():
     parser_update = subparsers.add_parser('update', help='Update an existing stack')
     parser_update.add_argument('-t', '--template', required=True, type=configargparse.FileType())
     parser_update.add_argument('-c', '--config', env_var='STACKS_CONFIG',
-                               default=None, required=False,
+                               default='config.yaml', required=False,
                                type=_is_file)
     parser_update.add_argument('name', nargs='?', default=None)
     parser_update.add_argument('-e', '--env', env_var='STACKS_ENV', required=True)
