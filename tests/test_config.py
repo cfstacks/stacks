@@ -24,6 +24,30 @@ class TestConfig(unittest.TestCase):
         region = config.get_region_name('bar')
         self.assertEqual(region, 'eu-west-1')
 
+    def test_get_region_name_default_profile(self):
+        config.AWS_CONFIG_FILE = 'tests/fixtures/aws_credentials'
+        region = config.get_region_name('default')
+        self.assertEqual(region, 'us-east-1')
+
+    def test_config_load_no_file(self):
+        cfg = config.config_load('myenv')
+        self.assertIsInstance(cfg, dict)
+        self.assertEqual(cfg['env'], 'myenv')
+
+    def test_config_load_with_envs(self):
+        config_file = 'tests/fixtures/config_with_envs.yaml'
+        cfg = config.config_load('myenv', config_file)
+        self.assertIsInstance(cfg, dict)
+        self.assertEqual(cfg['env'], 'myenv')
+        self.assertEqual(cfg['foo'], 'foo-value-in-myenv')
+
+    def test_config_load_flat(self):
+        config_file = 'tests/fixtures/config_flat.yaml'
+        cfg = config.config_load('myenv', config_file)
+        self.assertIsInstance(cfg, dict)
+        self.assertEqual(cfg['env'], 'myenv')
+        self.assertEqual(cfg['foo'], 'bar')
+
 
 if __name__ == '__main__':
     unittest.main()
