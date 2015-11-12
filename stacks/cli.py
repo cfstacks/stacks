@@ -47,6 +47,7 @@ def parse_options():
 
     parser_delete = subparsers.add_parser('delete', help='Delete an existing stack')
     parser_delete.add_argument('-f', '--follow', dest='events_follow', help='Follow stack events', action='store_true')
+    parser_delete.add_argument('-y', '--yes', help='Confirm stack deletion.', action='store_true')
     parser_delete.add_argument('name')
 
     parser_events = subparsers.add_parser('events', help='List events from a stack')

@@ -79,7 +79,7 @@ def main():
                             follow=args.events_follow, create_on_update=args.create_on_update)
 
     if args.subcommand == 'delete':
-        cf.delete_stack(cf_conn, args.name, region, args.profile)
+        cf.delete_stack(cf_conn, args.name, region, args.profile, args.yes)
         if args.events_follow:
             cf.get_events(cf_conn, args.name, args.events_follow, 10)
 
