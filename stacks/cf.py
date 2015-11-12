@@ -208,14 +208,17 @@ def _calc_md5(j):
     return hashlib.md5(j.encode()).hexdigest()
 
 
-def delete_stack(conn, stack_name, region, profile):
+def delete_stack(conn, stack_name, region, profile, confirm):
     '''Deletes stack given its name'''
     msg = ('You are about to delete the following stack:\n'
            'Name: {}\n'
            'Region: {}\n'
            'Profile: {}\n').format(stack_name, region, profile)
-    print(msg)
-    response = input('Are you sure? [y/N] ')
+    if not confirm:
+        print(msg)
+        response = input('Are you sure? [y/N] ')
+    else:
+        response = 'yes'
 
     if response in YES:
         try:
