@@ -10,7 +10,7 @@ def parse_options():
     Return parser object and list of arguments
     '''
     parser = configargparse.ArgumentParser()
-    parser.add_argument('-p', '--profile', default='default')
+    parser.add_argument('-p', '--profile', required=False)
     parser.add_argument('-r', '--region', required=False)
     parser.add_argument('--version', action='version', version=__about__.__version__)
     subparsers = parser.add_subparsers(title='available subcommands', dest='subcommand')

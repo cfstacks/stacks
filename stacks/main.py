@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import sys
+import os
 import signal
 
 import boto.ec2
@@ -15,7 +16,7 @@ from stacks import aws
 from stacks import cf
 from stacks.config import config_load
 from stacks.config import get_region_name
-from stacks.config import check_profile_exists
+from stacks.config import profile_exists
 from stacks.config import validate_properties
 
 
@@ -29,20 +30,47 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    if not check_profile_exists(args.profile):
-        print('Profile {} does not exist.'.format(args.profile))
+    # Figure out profile value in the following order
+    # - cli arg
+    # - env variable
+    # - default profile if exists
+    if args.profile:
+        profile = args.profile
+    elif os.environ.get('AWS_DEFAULT_PROFILE'):
+        profile = os.environ.get('AWS_DEFAULT_PROFILE')
+    elif profile_exists('default'):
+        profile = 'default'
+    elif args.profile and not profile_exists(args.profile):
+        print('Profile "{}" does not exist.'.format(args.profile))
         sys.exit(1)
+    else:
+        profile = None
 
+    # Figure out region value in the following order
+    # - cli arg
+    # - env variable
+    # - region from config
     if args.region:
         region = args.region
+    elif os.environ.get('AWS_DEFAULT_REGION'):
+        region = os.environ.get('AWS_DEFAULT_REGION')
     else:
-        region = get_region_name(args.profile)
+        region = get_region_name(profile)
+        if not region:
+            print('Region is not specified.')
+            sys.exit(1)
 
-    ec2_conn = boto.ec2.connect_to_region(region, profile_name=args.profile)
-    vpc_conn = boto.vpc.connect_to_region(region, profile_name=args.profile)
-    cf_conn = boto.cloudformation.connect_to_region(region, profile_name=args.profile)
-    r53_conn = boto.route53.connect_to_region(region, profile_name=args.profile)
-    s3_conn = boto.s3.connect_to_region(region, profile_name=args.profile)
+    # Not great, but try to catch everything. Above should be refactored in a
+    # function which handles setting up connections to different aws services
+    try:
+        ec2_conn = boto.ec2.connect_to_region(region, profile_name=profile)
+        vpc_conn = boto.vpc.connect_to_region(region, profile_name=profile)
+        cf_conn = boto.cloudformation.connect_to_region(region, profile_name=profile)
+        r53_conn = boto.route53.connect_to_region(region, profile_name=profile)
+        s3_conn = boto.s3.connect_to_region(region, profile_name=profile)
+    except:
+        print(sys.exc_info()[1])
+        sys.exit(1)
 
     config_file = vars(args).get('config', None)
     env = vars(args).get('env', None)
@@ -79,7 +107,7 @@ def main():
                             follow=args.events_follow, create_on_update=args.create_on_update)
 
     if args.subcommand == 'delete':
-        cf.delete_stack(cf_conn, args.name, region, args.profile, args.yes)
+        cf.delete_stack(cf_conn, args.name, region, profile, args.yes)
         if args.events_follow:
             cf.get_events(cf_conn, args.name, args.events_follow, 10)
 
