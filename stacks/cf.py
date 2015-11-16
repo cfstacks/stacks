@@ -111,7 +111,7 @@ def upload_template(conn, config, tpl, stack_name):
 
 def list_stacks(conn, name_filter='*', verbose=False):
     '''List active stacks'''
-    states = FAILED_STACK_STATES + COMPLETE_STACK_STATES + IN_PROGRESS_STACK_STATES
+    states = FAILED_STACK_STATES + COMPLETE_STACK_STATES + IN_PROGRESS_STACK_STATES + ROLLBACK_STACK_STATES
     s = conn.list_stacks(states)
 
     stacks = []
@@ -191,7 +191,11 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
         if follow:
             get_events(conn, sn, follow, 10)
     except BotoServerError as err:
+        if 'No updates are to be performed' in err.message:
+            print(err.message)
+            sys.exit(0)
         print(err.message)
+        sys.exit(1)
 
 
 def _extract_tags(metadata):
@@ -224,8 +228,12 @@ def delete_stack(conn, stack_name, region, profile, confirm):
         try:
             conn.delete_stack(stack_name)
         except BotoServerError as err:
-            print(err.message)
-            sys.exit(0)
+            if 'does not exist' in err.message:
+                print(err.message)
+                sys.exit(0)
+            else:
+                print(err.message)
+                sys.exit(1)
 
 
 def get_events(conn, stack_name, follow, lines=None):
@@ -265,8 +273,12 @@ def get_events(conn, stack_name, follow, lines=None):
             if poll:
                 time.sleep(1)
     except BotoServerError as err:
-        print(err.message)
-        sys.exit(0)
+        if 'does not exist' in err.message:
+            print(err.message)
+            sys.exit(0)
+        else:
+            print(err.message)
+            sys.exit(1)
 
 
 def get_stack_status(conn, stack_name):
