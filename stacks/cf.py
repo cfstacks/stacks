@@ -162,10 +162,10 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
     tpl_size = len(tpl)
 
     if dry:
-        print(tpl)
-        print('Name: {}'.format(sn), file=sys.stderr)
-        print('Tags: ' + ', '.join(['{}={}'.format(k, v) for (k, v) in tags.items()]), file=sys.stderr)
-        print('Template size:', tpl_size, file=sys.stderr)
+        print(tpl, flush=True)
+        print('Name: {}'.format(sn), file=sys.stderr, flush=True)
+        print('Tags: ' + ', '.join(['{}={}'.format(k, v) for (k, v) in tags.items()]), file=sys.stderr, flush=True)
+        print('Template size:', tpl_size, file=sys.stderr, flush=True)
         return True
 
     if tpl_size > 51200:
@@ -191,7 +191,12 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
         if follow:
             get_events(conn, sn, follow, 10)
     except BotoServerError as err:
-        if 'No updates are to be performed' in err.message:
+        # Do not exit with 1 when one of the below messages are returned
+        non_error_messages = [
+            'No updates are to be performed',
+            'already exists',
+        ]
+        if any(s in err.message for s in non_error_messages):
             print(err.message)
             sys.exit(0)
         print(err.message)
@@ -259,7 +264,7 @@ def get_events(conn, stack_name, follow, lines=None):
             seen_ids |= set([event.event_id for event in events])
 
             if len(events_display) >= 1:
-                print(tabulate(reversed(events_display), tablefmt='plain'))
+                print(tabulate(reversed(events_display), tablefmt='plain'), flush=True)
 
             # Check for stack status, exit with 1 if stack has failed or exit with 0
             # if it is in successfull state. Otherwise continue polling.
