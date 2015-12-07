@@ -109,6 +109,25 @@ def upload_template(conn, config, tpl, stack_name):
     return url
 
 
+def stack_resources(conn, stack_name):
+    '''List stack resources'''
+    out = conn.describe_stack_resources(stack_name_or_id=stack_name)
+
+    resources = []
+    for r in out:
+        columns = [
+            r.logical_resource_id,
+            r.physical_resource_id,
+            r.resource_type,
+            r.resource_status,
+        ]
+        resources.append(columns)
+
+    if len(out) >= 1:
+        return tabulate(resources, tablefmt='plain')
+    return None
+
+
 def list_stacks(conn, name_filter='*', verbose=False):
     '''List active stacks'''
     states = FAILED_STACK_STATES + COMPLETE_STACK_STATES + IN_PROGRESS_STACK_STATES + ROLLBACK_STACK_STATES
