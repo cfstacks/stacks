@@ -87,6 +87,12 @@ def main():
     config['get_zone_id'] = aws.get_zone_id
     config['get_stack_output'] = aws.get_stack_output
 
+    if args.subcommand == 'resources':
+        output = cf.stack_resources(cf_conn, args.name)
+        if output:
+            print(output)
+        cf_conn.close()
+
     if args.subcommand == 'list':
         output = cf.list_stacks(cf_conn, args.name, args.verbose)
         if output:

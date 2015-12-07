@@ -15,10 +15,13 @@ def parse_options():
     parser.add_argument('--version', action='version', version=__about__.__version__)
     subparsers = parser.add_subparsers(title='available subcommands', dest='subcommand')
 
+    parser_resources = subparsers.add_parser('resources', help='List stack resources')
+    parser_resources.add_argument('name', help='Stack name')
+
     parser_list = subparsers.add_parser('list', help='List stacks')
     parser_list.add_argument('-v', '--verbose', action='store_true')
     parser_list.add_argument('name', default='*', nargs='?',
-                             help='stack name or unix shell-style pattern')
+                             help='Stack name or unix shell-style pattern')
 
     parser_create = subparsers.add_parser('create', help='Create a new stack')
     parser_create.add_argument('-t', '--template', required=True, type=configargparse.FileType())
