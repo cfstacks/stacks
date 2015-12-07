@@ -19,6 +19,7 @@ from tabulate import tabulate
 from boto.exception import BotoServerError
 
 from stacks.aws import get_stack_tag
+from stacks.aws import throttling_retry
 
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
 FAILED_STACK_STATES = [
@@ -305,6 +306,7 @@ def get_events(conn, stack_name, follow, lines=None):
             sys.exit(1)
 
 
+@throttling_retry
 def get_stack_status(conn, stack_name):
     '''Check stack status'''
     stacks = conn.list_stacks()
@@ -316,8 +318,4 @@ def get_stack_status(conn, stack_name):
 
 def stack_exists(conn, stack_name):
     '''Check whether stack_name exists.'''
-    try:
-        conn.describe_stacks(stack_name)
-        return True
-    except BotoServerError:
-        return False
+    return True if get_stack_status(conn, stack_name) else False
