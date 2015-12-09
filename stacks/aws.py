@@ -76,3 +76,14 @@ def get_stack_tag(conn, name, tag):
         raise RuntimeError('{} stack not found'.format(name))
     tags = [s.tags for s in result][0]
     return tags.get(tag, '')
+
+
+@throttling_retry
+def get_stack_resource(conn, stack_name, logical_id):
+    '''Return a physical_resource_id given its logical_id'''
+    resources = conn.describe_stack_resources(stack_name_or_id=stack_name)
+    for r in resources:
+        # TODO: would be nice to check for resource_status
+        if r.logical_resource_id == logical_id:
+            return r.physical_resource_id
+    return None
