@@ -87,6 +87,7 @@ def main():
     config['get_vpc_id'] = aws.get_vpc_id
     config['get_zone_id'] = aws.get_zone_id
     config['get_stack_output'] = aws.get_stack_output
+    config['get_stack_resource'] = aws.get_stack_resource
 
     if args.subcommand == 'resources':
         output = cf.stack_resources(cf_conn, args.name)
