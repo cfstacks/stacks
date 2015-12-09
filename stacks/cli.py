@@ -28,6 +28,9 @@ def parse_options():
     parser_create.add_argument('-c', '--config', default='config.yaml',
                                env_var='STACKS_CONFIG', required=False,
                                type=_is_file)
+    parser_create.add_argument('--config-dir', default='config.d',
+                               env_var='STACKS_CONFIG_DIR', required=False,
+                               type=_is_dir)
     parser_create.add_argument('name', nargs='?', default=None)
     parser_create.add_argument('-e', '--env', env_var='STACKS_ENV', required=True)
     parser_create.add_argument('-P', '--property', required=False, action='append')
@@ -39,6 +42,9 @@ def parse_options():
     parser_update.add_argument('-c', '--config', env_var='STACKS_CONFIG',
                                default='config.yaml', required=False,
                                type=_is_file)
+    parser_update.add_argument('--config-dir', default='config.d',
+                               env_var='STACKS_CONFIG_DIR', required=False,
+                               type=_is_dir)
     parser_update.add_argument('name', nargs='?', default=None)
     parser_update.add_argument('-e', '--env', env_var='STACKS_ENV', required=True)
     parser_update.add_argument('-P', '--property', required=False, action='append')
@@ -68,3 +74,11 @@ def _is_file(fname):
     To be used as a type argument in add_argument()
     '''
     return fname if os.path.isfile(fname) else None
+
+
+def _is_dir(dirname):
+    '''Check whether dirname is a dir
+
+    To be used as a type argument in add_argument()
+    '''
+    return dirname if os.path.isdir(dirname) else None

@@ -73,9 +73,10 @@ def main():
         sys.exit(1)
 
     config_file = vars(args).get('config', None)
+    config_dir = vars(args).get('config_dir', None)
     env = vars(args).get('env', None)
 
-    config = config_load(env, config_file)
+    config = config_load(env, config_file, config_dir)
     config['region'] = region
     config['ec2_conn'] = ec2_conn
     config['vpc_conn'] = vpc_conn

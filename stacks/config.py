@@ -1,5 +1,5 @@
 import sys
-import os.path
+import os
 import yaml
 import botocore.config
 
@@ -7,8 +7,20 @@ AWS_CONFIG_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
 RESERVED_PROPERTIES = ['region', 'profile', 'env']
 
 
-def config_load(env, config_file=None):
-    '''Load stack configuration file'''
+def config_load(env, config_file=None, config_dir=None):
+    '''Load stack configuration files'''
+    config = {}
+    conf_files = list_files(config_dir)
+    if config_file:
+        conf_files.insert(0, config_file)
+    for f in conf_files:
+        config = config_merge(env, f)
+    config['env'] = env
+    return config
+
+
+def config_merge(env, config_file=None):
+    '''Merge stacks configuration file environments'''
     c = _load_yaml(config_file)
     config = {}
     if c:
@@ -17,8 +29,20 @@ def config_load(env, config_file=None):
     else:
         config.update({})
 
-    config['env'] = env
     return config
+
+
+def list_files(dirname):
+    '''Return a sorted list of files from dirname'''
+    l = os.listdir(dirname)
+    lf = []
+    if not dirname:
+        return lf
+    for f in l:
+        joined = os.path.join(dirname, f)
+        if os.path.isfile(joined) and joined.endswith('.yaml'):
+            lf.append(joined)
+    return sorted(lf, reverse=True)
 
 
 def _merge(config, env):
