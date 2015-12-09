@@ -48,6 +48,15 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg['env'], 'myenv')
         self.assertEqual(cfg['foo'], 'bar')
 
+    def test_list_files_order(self):
+        dirname = 'tests/fixtures/config.d'
+        correct_list = [
+            'tests/fixtures/config.d/20-config.yaml',
+            'tests/fixtures/config.d/10-config.yaml',
+        ]
+        ls = config.list_files(dirname)
+        self.assertListEqual(ls, correct_list)
+
 
 if __name__ == '__main__':
     unittest.main()
