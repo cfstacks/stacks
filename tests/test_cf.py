@@ -31,6 +31,7 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(err.exception.code, 1)
 
 
+@mock_cloudformation
 class TestStackActions(unittest.TestCase):
 
     def setUp(self):
@@ -42,7 +43,6 @@ class TestStackActions(unittest.TestCase):
         self.config['cf_conn'] = boto.cloudformation.connect_to_region(self.config['region'])
         self.config['s3_conn'] = boto.s3.connect_to_region(self.config['region'])
 
-    @mock_cloudformation
     def test_create_stack(self):
         stack_name = None
         with open('tests/fixtures/create_stack_template.yaml') as tpl_file:
@@ -54,7 +54,22 @@ class TestStackActions(unittest.TestCase):
         self.assertEqual(self.config['custom_tag'], stack.tags['Test'])
         self.assertEqual('b08c2e9d7003f62ba8ffe5c985c50a63', stack.tags['MD5Sum'])
 
-    @mock_cloudformation
+    def test_update_stack(self):
+        stack_name = None
+        with open('tests/fixtures/create_stack_template.yaml') as tpl_file:
+            cf.create_stack(self.config['cf_conn'], stack_name, tpl_file,
+                            self.config, update=True)
+        stack = self.config['cf_conn'].describe_stacks('unittest-infra')[0]
+        self.assertEqual('b08c2e9d7003f62ba8ffe5c985c50a63', stack.tags['MD5Sum'])
+
+    def test_create_on_update(self):
+        stack_name = 'create-on-update-stack'
+        with open('tests/fixtures/create_stack_template.yaml') as tpl_file:
+            cf.create_stack(self.config['cf_conn'], stack_name, tpl_file,
+                            self.config, update=True, create_on_update=True)
+        stack = self.config['cf_conn'].describe_stacks(stack_name)[0]
+        self.assertEqual('b08c2e9d7003f62ba8ffe5c985c50a63', stack.tags['MD5Sum'])
+
     def test_create_stack_no_stack_name(self):
         stack_name = None
         with open('tests/fixtures/no_metadata_template.yaml') as tpl_file:
@@ -62,7 +77,6 @@ class TestStackActions(unittest.TestCase):
                 cf.create_stack(self.config['cf_conn'], stack_name, tpl_file, self.config)
             self.assertEqual(err.exception.code, 1)
 
-    @mock_cloudformation
     def test_create_stack_no_metadata(self):
         stack_name = 'my-stack'
         with open('tests/fixtures/no_metadata_template.yaml') as tpl_file:
@@ -71,7 +85,6 @@ class TestStackActions(unittest.TestCase):
         self.assertEqual('my-stack', stack.stack_name)
         self.assertEqual(self.config['env'], stack.tags['Env'])
         self.assertEqual('b08c2e9d7003f62ba8ffe5c985c50a63', stack.tags['MD5Sum'])
-
 
 if __name__ == '__main__':
     unittest.main()

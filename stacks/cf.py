@@ -317,5 +317,12 @@ def get_stack_status(conn, stack_name):
 
 
 def stack_exists(conn, stack_name):
-    '''Check whether stack_name exists.'''
-    return True if get_stack_status(conn, stack_name) else False
+    '''Check whether stack_name exists
+
+    CF keeps deleted duplicate stack names with DELETE_COMPLETE status, which is
+    treated as non existing stack.
+    '''
+    status = get_stack_status(conn, stack_name)
+    if status == 'DELETE_COMPLETE' or status is None:
+        return False
+    return True
