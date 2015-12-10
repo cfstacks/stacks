@@ -18,6 +18,16 @@ def parse_options():
     parser_resources = subparsers.add_parser('resources', help='List stack resources')
     parser_resources.add_argument('name', help='Stack name')
 
+    parser_config = subparsers.add_parser('config', help='Print config properties')
+    parser_config.add_argument('-e', '--env', env_var='STACKS_ENV')
+    parser_config.add_argument('-c', '--config', default='config.yaml',
+                               env_var='STACKS_CONFIG', required=False,
+                               type=_is_file)
+    parser_config.add_argument('--config-dir', default='config.d',
+                               env_var='STACKS_CONFIG_DIR', required=False,
+                               type=_is_dir)
+    parser_config.add_argument('property_name', nargs='?', default=None)
+
     parser_list = subparsers.add_parser('list', help='List stacks')
     parser_list.add_argument('-v', '--verbose', action='store_true')
     parser_list.add_argument('name', default='*', nargs='?',
