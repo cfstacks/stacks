@@ -18,6 +18,7 @@ from stacks.config import config_load
 from stacks.config import get_region_name
 from stacks.config import profile_exists
 from stacks.config import validate_properties
+from stacks.config import print_config
 
 
 def main():
@@ -29,6 +30,22 @@ def main():
     if not args.subcommand:
         parser.print_help()
         sys.exit(0)
+
+    config_file = vars(args).get('config', None)
+    config_dir = vars(args).get('config_dir', None)
+    env = vars(args).get('env', None)
+    config = config_load(env, config_file, config_dir)
+
+    if args.subcommand == 'config':
+        config = config_load(env, config_file, config_dir)
+        print_config(config, args.property_name)
+        sys.exit(0)
+
+    config['get_ami_id'] = aws.get_ami_id
+    config['get_vpc_id'] = aws.get_vpc_id
+    config['get_zone_id'] = aws.get_zone_id
+    config['get_stack_output'] = aws.get_stack_output
+    config['get_stack_resource'] = aws.get_stack_resource
 
     # Figure out profile value in the following order
     # - cli arg
@@ -59,6 +76,7 @@ def main():
         if not region:
             print('Region is not specified.')
             sys.exit(1)
+    config['region'] = region
 
     # Not great, but try to catch everything. Above should be refactored in a
     # function which handles setting up connections to different aws services
@@ -68,26 +86,14 @@ def main():
         cf_conn = boto.cloudformation.connect_to_region(region, profile_name=profile)
         r53_conn = boto.route53.connect_to_region(region, profile_name=profile)
         s3_conn = boto.s3.connect_to_region(region, profile_name=profile)
+        config['ec2_conn'] = ec2_conn
+        config['vpc_conn'] = vpc_conn
+        config['cf_conn'] = cf_conn
+        config['r53_conn'] = r53_conn
+        config['s3_conn'] = s3_conn
     except:
         print(sys.exc_info()[1])
         sys.exit(1)
-
-    config_file = vars(args).get('config', None)
-    config_dir = vars(args).get('config_dir', None)
-    env = vars(args).get('env', None)
-
-    config = config_load(env, config_file, config_dir)
-    config['region'] = region
-    config['ec2_conn'] = ec2_conn
-    config['vpc_conn'] = vpc_conn
-    config['cf_conn'] = cf_conn
-    config['r53_conn'] = r53_conn
-    config['s3_conn'] = s3_conn
-    config['get_ami_id'] = aws.get_ami_id
-    config['get_vpc_id'] = aws.get_vpc_id
-    config['get_zone_id'] = aws.get_zone_id
-    config['get_stack_output'] = aws.get_stack_output
-    config['get_stack_resource'] = aws.get_stack_resource
 
     if args.subcommand == 'resources':
         output = cf.stack_resources(cf_conn, args.name)

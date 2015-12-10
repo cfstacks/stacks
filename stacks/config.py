@@ -100,3 +100,14 @@ def validate_properties(props_arg):
         print('Unable to override reserved properties: {}'.format(','.join(reserved)))
         sys.exit(1)
     return properties
+
+
+def print_config(config, property_name=None):
+    if property_name:
+        if config.get(property_name):
+            print('{}={}'.format(property_name, config[property_name]))
+        return
+
+    for k, v in config.items():
+        print('{}={}'.format(k, v))
+    return
