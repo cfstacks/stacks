@@ -49,13 +49,22 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg['foo'], 'bar')
 
     def test_list_files_order(self):
-        dirname = 'tests/fixtures/config.d'
-        correct_list = [
+        config_dir = 'tests/fixtures/config.d'
+        correct_order = [
             'tests/fixtures/config.d/20-config.yaml',
             'tests/fixtures/config.d/10-config.yaml',
         ]
-        ls = config.list_files(dirname)
-        self.assertListEqual(ls, correct_list)
+        ls = config.list_files(config_dir)
+        self.assertListEqual(ls, correct_order)
+
+    def test_config_dir_override(self):
+        config_file = 'tests/fixtures/config_flat.yaml'
+        config_dir = 'tests/fixtures/config.d'
+        cfg = config.config_load('myenv', config_file, config_dir)
+        self.assertIsInstance(cfg, dict)
+        self.assertEqual(cfg['env'], 'myenv')
+        self.assertEqual(cfg['foo'], 'baz')
+        self.assertEqual(cfg['comes_from'], '20-config')
 
 
 if __name__ == '__main__':
