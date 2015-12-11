@@ -37,7 +37,6 @@ def main():
     config = config_load(env, config_file, config_dir)
 
     if args.subcommand == 'config':
-        config = config_load(env, config_file, config_dir)
         print_config(config, args.property_name)
         sys.exit(0)
 

@@ -14,7 +14,7 @@ def config_load(env, config_file=None, config_dir=None):
     if config_file:
         conf_files.insert(0, config_file)
     for f in conf_files:
-        config = config_merge(env, f)
+        config.update(config_merge(env, f))
     config['env'] = env
     return config
 
