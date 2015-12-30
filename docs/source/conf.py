@@ -35,7 +35,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'stacks'
-copyright = '2015, Vaidas Jablonskis'
+copyright = '2016, Vaidas Jablonskis'
 author = 'Vaidas Jablonskis'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -103,8 +103,12 @@ html_theme = 'bootstrap'
 # documentation.
 html_theme_options = {
     'bootswatch_theme': 'flatly',
+    'navbar_sidebarrel': False,
+    'navbar_pagenav': False,
+    'source_link_position': False,
     'navbar_links': [
-        ('GitHub', 'https://github.com/cfstacks/stacks', True),
+        ('Contribute', 'https://github.com/cfstacks/stacks', True),
+        ('Issues', 'https://github.com/cfstacks/stacks/issues', True),
     ],
 }
 
@@ -113,14 +117,14 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-#html_title = None
+html_title = 'Manage CloudFormation with Templates Written in YAML'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-#html_short_title = None
+html_short_title = 'stacks'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+# html_logo = None
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -148,7 +152,6 @@ html_use_smartypants = False
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 html_sidebars = {
-    # '**': ['globaltoc.html', 'localtoc.html'],
     '**': ['localtoc.html'],
 }
 
@@ -199,38 +202,3 @@ html_show_sourcelink = True
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'stacksdoc'
 
-# -- Options for manual page output ---------------------------------------
-
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'stacks', 'stacks Documentation',
-     [author], 1)
-]
-
-# If true, show URL addresses after external links.
-#man_show_urls = False
-
-
-# -- Options for Texinfo output -------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-  (master_doc, 'stacks', 'stacks Documentation',
-   author, 'stacks', 'One line description of project.',
-   'Miscellaneous'),
-]
-
-# Documents to append as an appendix to all manuals.
-#texinfo_appendices = []
-
-# If false, no module index is generated.
-#texinfo_domain_indices = True
-
-# How to display URL addresses: 'footnote', 'no', or 'inline'.
-#texinfo_show_urls = 'footnote'
-
-# If true, do not generate a @detailmenu in the "Top" node's menu.
-#texinfo_no_detailmenu = False
