@@ -5,6 +5,7 @@ Cloudformation related functions
 from __future__ import print_function
 
 import sys
+import builtins
 import time
 import yaml
 import json
@@ -73,7 +74,7 @@ def _check_missing_vars(env, tpl_file, config):
     tpl_str = tpl_file.read()
     ast = env.parse(tpl_str)
     required_properties = meta.find_undeclared_variables(ast)
-    missing_properties = required_properties - config.keys()
+    missing_properties = required_properties - config.keys() - set(dir(builtins))
 
     if len(missing_properties) > 0:
         print('Required properties not set: {}'.format(','.join(missing_properties)))
