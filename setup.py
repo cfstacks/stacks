@@ -27,6 +27,8 @@ config = {
     'url': about['__url__'],
     'download_url': about['__url__'],
     'version': about['__version__'],
+    'maintainer': about['__maintainer__'],
+    'maintainer_email': about['__maintainer_email__'],
     'packages': find_packages(),
     'install_requires': install_requires,
     'tests_require': tests_require,
