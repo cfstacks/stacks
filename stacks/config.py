@@ -105,7 +105,7 @@ def validate_properties(props_arg):
 def print_config(config, property_name=None):
     if property_name:
         if config.get(property_name):
-            print('{}={}'.format(property_name, config[property_name]))
+            print(config[property_name])
         return
 
     for k, v in config.items():
