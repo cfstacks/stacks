@@ -1,6 +1,6 @@
 # stacks
 [![Build Status](https://travis-ci.org/cfstacks/stacks.svg?branch=master)](https://travis-ci.org/cfstacks/stacks)
-[![Documentation Status](https://readthedocs.org/projects/stacks/badge/?version=latest)](https://stacks.tools/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/stacks/badge/?version=stable)](https://stacks.tools/en/stable/?badge=stable)
 
 Stacks is CloudFormation management tool that allows you to define AWS
 resources configuration in YAML with Jinja2 templating.
@@ -31,15 +31,15 @@ YAML and start using stacks and grow from there.
 * Stack events streaming
 
 
-## [Documentation](https://stacks.tools/en/latest/#documentation)
+## [Documentation](https://stacks.tools/en/stable/#documentation)
 
-### Quickstarts
+#### Quickstarts
 
-* [Getting Started](https://stacks.tools/en/latest/quickstarts/getting_started.html)
+* [Getting Started](https://stacks.tools/en/stable/quickstarts/getting_started.html)
 
-### Guides
+#### Guides
 
-* [Step-by-Step Walkthrough](https://stacks.tools/en/latest/guides/step_by_step_walkthrough.html)
+* [Step-by-Step Walkthrough](https://stacks.tools/en/stable/guides/step_by_step_walkthrough.html)
 
 
 ## Contribution
