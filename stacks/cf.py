@@ -111,22 +111,51 @@ def upload_template(conn, config, tpl, stack_name):
     return url
 
 
-def stack_resources(conn, stack_name):
+def stack_resources(conn, stack_name, logical_resource_id=None):
     '''List stack resources'''
-    out = conn.describe_stack_resources(stack_name_or_id=stack_name)
-
+    try:
+        result = conn.describe_stack_resources(stack_name_or_id=stack_name,
+                                               logical_resource_id=logical_resource_id)
+    except BotoServerError as err:
+        print(err.message)
+        sys.exit(1)
     resources = []
-    for r in out:
-        columns = [
-            r.logical_resource_id,
-            r.physical_resource_id,
-            r.resource_type,
-            r.resource_status,
-        ]
-        resources.append(columns)
+    if logical_resource_id:
+        resources.append([r.physical_resource_id for r in result])
+    else:
+        for r in result:
+            columns = [
+                r.logical_resource_id,
+                r.physical_resource_id,
+                r.resource_type,
+                r.resource_status,
+            ]
+            resources.append(columns)
 
-    if len(out) >= 1:
+    if len(result) >= 1:
         return tabulate(resources, tablefmt='plain')
+    return None
+
+
+def stack_outputs(conn, stack_name, output_name):
+    '''List stacks outputs'''
+    try:
+        result = conn.describe_stacks(stack_name)
+    except BotoServerError as err:
+        print(err.message)
+        sys.exit(1)
+
+    outputs = []
+    outs = [s.outputs for s in result][0]
+    for o in outs:
+        if not output_name:
+            columns = [o.key, o.value]
+            outputs.append(columns)
+        elif output_name and o.key == output_name:
+            outputs.append([o.value])
+
+    if len(result) >= 1:
+        return tabulate(outputs, tablefmt='plain')
     return None
 
 

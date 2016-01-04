@@ -95,7 +95,13 @@ def main():
         sys.exit(1)
 
     if args.subcommand == 'resources':
-        output = cf.stack_resources(cf_conn, args.name)
+        output = cf.stack_resources(cf_conn, args.name, args.logical_id)
+        if output:
+            print(output)
+        cf_conn.close()
+
+    if args.subcommand == 'outputs':
+        output = cf.stack_outputs(cf_conn, args.name, args.output_name)
         if output:
             print(output)
         cf_conn.close()
