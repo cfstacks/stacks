@@ -17,6 +17,13 @@ def parse_options():
 
     parser_resources = subparsers.add_parser('resources', help='List stack resources')
     parser_resources.add_argument('name', help='Stack name')
+    parser_resources.add_argument('logical_id', nargs='?', default=None,
+                                  help='Logical resource id. Returns physical_resource_id.')
+
+    parser_outputs = subparsers.add_parser('outputs', help='List stack outputs')
+    parser_outputs.add_argument('name', help='Stack name')
+    parser_outputs.add_argument('output_name', nargs='?', default=None,
+                                help='Output name. Returns output value.')
 
     parser_config = subparsers.add_parser('config', help='Print config properties')
     parser_config.add_argument('-e', '--env', env_var='STACKS_ENV')
