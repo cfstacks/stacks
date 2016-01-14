@@ -1,4 +1,4 @@
-__version__ = '0.3.0.git'
+__version__ = '0.3.1'
 __licence__ = 'MIT'
 __url__ = 'https://cfstacks.github.io'
 __maintainer__ = 'Vaidas Jablonskis'
