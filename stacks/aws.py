@@ -12,7 +12,7 @@ def throttling_retry(func):
                 retval = func(*args)
                 return retval
             except BotoServerError as err:
-                if err.code == 'Throttling' and retries <= 3:
+                if (err.code == 'Throttling' or err.code == 'RequestLimitExceeded') and retries <= 3:
                     sleep = 3 * (2**retries)
                     print('Being throttled. Retrying after {} seconds..'.format(sleep))
                     time.sleep(sleep)
