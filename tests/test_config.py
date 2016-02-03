@@ -67,5 +67,15 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg['comes_from'], '20-config')
 
 
+class TestPrintConfig(unittest.TestCase):
+    def test_print_config(self):
+        config_file = 'tests/fixtures/config_flat.yaml'
+        cfg = config.config_load('myenv', config_file)
+        self.assertIsInstance(cfg, dict)
+        self.assertEqual(cfg['env'], 'myenv')
+        self.assertEqual(cfg['false_boolean'], False)
+        self.assertEqual(cfg['zero'], 0)
+
+
 if __name__ == '__main__':
     unittest.main()
