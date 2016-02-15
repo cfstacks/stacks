@@ -37,7 +37,7 @@ def main():
     config = config_load(env, config_file, config_dir)
 
     if args.subcommand == 'config':
-        print_config(config, args.property_name)
+        print_config(config, args.property_name, output_format=args.output_format)
         sys.exit(0)
 
     config['get_ami_id'] = aws.get_ami_id

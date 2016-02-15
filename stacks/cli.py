@@ -27,6 +27,8 @@ def parse_options():
 
     parser_config = subparsers.add_parser('config', help='Print config properties')
     parser_config.add_argument('-e', '--env', env_var='STACKS_ENV')
+    parser_config.add_argument('-o', '--output', default='text', choices=['text', 'yaml', 'json'],
+                               dest='output_format', help='Output format')
     parser_config.add_argument('-c', '--config', default='config.yaml',
                                env_var='STACKS_CONFIG', required=False,
                                type=_is_file)
