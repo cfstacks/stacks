@@ -1,6 +1,7 @@
 import sys
 import os
 import yaml
+import json
 import botocore.config
 
 AWS_CONFIG_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
@@ -102,12 +103,22 @@ def validate_properties(props_arg):
     return properties
 
 
-def print_config(config, property_name=None):
+def print_config(config, property_name=None, output_format=None):
     if property_name is not None:
         if config.get(property_name):
-            print(config[property_name])
+            if output_format == 'json':
+                print(json.dumps(config[property_name], indent=2))
+            elif output_format == 'yaml':
+                print(yaml.dump(config[property_name]))
+            else:
+                print(config[property_name])
         return
 
-    for k, v in config.items():
-        print('{}={}'.format(k, v))
+    elif output_format == 'yaml':
+        print(yaml.dump(config))
+    elif output_format == 'json':
+        print(json.dumps(config, indent=2))
+    else:
+        for k, v in config.items():
+            print('{}={}'.format(k, v))
     return
