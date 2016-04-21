@@ -2,7 +2,7 @@ import sys
 import os
 import yaml
 import json
-import botocore.config
+import boto
 
 AWS_CONFIG_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
 RESERVED_PROPERTIES = ['region', 'profile', 'env']
@@ -74,23 +74,23 @@ def get_region_name(profile):
     Return region name
     '''
     if os.path.isfile(AWS_CONFIG_FILE):
-        c = botocore.config.load_config(AWS_CONFIG_FILE)
-        if profile == 'default':
-            r = c['profiles'].get('default', {}).get('region')
+        boto.config.load_credential_file(AWS_CONFIG_FILE)
+
+        if boto.config.get(profile, 'region'):
+            return boto.config.get(profile, 'region')
         else:
-            r = c.get(profile, {}).get('region')
-        return r
+            return None
     return None
 
 
 def profile_exists(profile):
     '''Return True if profile exists in AWS_CONFIG_FILE'''
     if os.path.isfile(AWS_CONFIG_FILE):
-        c = botocore.config.load_config(AWS_CONFIG_FILE)
-        if profile == 'default':
-            return True if 'default' in c['profiles'].keys() else False
+        boto.config.load_credential_file(AWS_CONFIG_FILE)
+        if boto.config.get(profile, 'region'):
+            return True
         else:
-            return True if profile in c.keys() else False
+            return False
     return False
 
 
