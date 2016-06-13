@@ -339,9 +339,14 @@ def get_events(conn, stack_name, follow, lines=None):
 @throttling_retry
 def get_stack_status(conn, stack_name):
     '''Check stack status'''
-    stacks = conn.list_stacks()
+    stacks = []
+    resp = conn.list_stacks()
+    stacks.extend(resp)
+    while resp.next_token:
+        resp = conn.list_stacks(next_token=resp.next_token)
+        stacks.extend(resp)
     for s in stacks:
-        if s.stack_name == stack_name:
+        if s.stack_name == stack_name and s.stack_status != 'DELETE_COMPLETE':
             return s.stack_status
     return None
 
