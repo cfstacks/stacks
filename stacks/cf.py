@@ -341,7 +341,7 @@ def get_stack_status(conn, stack_name):
     '''Check stack status'''
     stacks = conn.list_stacks()
     for s in stacks:
-        if s.stack_name == stack_name:
+        if s.stack_name == stack_name and s.stack_status != 'DELETE_COMPLETE':
             return s.stack_status
     return None
 
