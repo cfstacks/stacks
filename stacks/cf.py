@@ -326,7 +326,7 @@ def get_events(conn, stack_name, follow, lines=None):
 
             poll = follow
             if poll:
-                time.sleep(1)
+                time.sleep(5)
     except BotoServerError as err:
         if 'does not exist' in err.message:
             print(err.message)
