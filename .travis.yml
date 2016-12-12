@@ -7,16 +7,26 @@ matrix:
     - python: 3.5
       env: TOXENV=py35
     - python: 3.4
+      env: TOXENV=docs
+    - python: 3.4
       env: TOXENV=py34-linux-package
     - python: 3.5
       env: TOXENV=py35-linux-package
-    - python: 3.4
-      env: TOXENV=docs
 
 install:
   - pip install tox
   - pip install .
 
 script:
-  - tox -v
+  - tox -v --skip-missing-interpreters
 
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: NTtQxdQ29cUcY8mMVzPV/hz8eAn4Hz80bIkxrhec2oocDXdTOdKUFd+yUmgFe3olPTX/MQYR9DFEEqObExakZdhIf32KhIITp40fJwLXWjXi1wxEJgiPGWXIZ48QUBkcO/YlXE2bY6bW1vDuvjQMhapUTG0JqgZgb8pSS6eUB2Cmh3Gaeq7dE1P9ZNIePppvuiCLD00fbQCsCDUT1T+QvcaIZ2DNs238gPM9RNrCIE47bsG72xhNc8M8CPv4Jp+j0Avwc9tuutLi9SXgbGTsyEFYkbVCfhYctvwpG9GR5qe9N8Lv92C1GTNiu7btLkffXOIV/zIX73AHqyZTZw3jzg5aejUOhHMd4k2usDyDyDVXY2q2sXfSy3Fr69CJuZk7k0ivvYdavToNOqnoJD8t9scLCCyVUjgdcVQHd/fRbNTHBRhKJZbRkXboDvdwhvrElo/asyqZzTd6YbbJEV7FRrjCXrSjJ3nS7tKe4yot+vsjmuQt+OyTE/Qt3IsKHBCjAc52tjbMXTC3gX0WqCIxSlcQVo9IKaynxc2hFiL1+UEKwoFGDHZ7rwiqgXHoF+QahVYus5Z2iqz+xYerF7Ss+XPc15VgN/NHj83BdFHYLNtMGdnAARW88w1QXo5FxrjfZYOcS+4RNMo9aeYktDexT4bo5MT/CPtQjWVSQ9syLjQ=
+  file: "stacks_py*_linux.pex"
+  file_glob: true
+  on:
+    tags: true
+    repo: cfstacks/stacks
