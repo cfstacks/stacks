@@ -47,7 +47,18 @@ def list_files(dirname):
 
 
 def _merge(config, env):
-    if set(('common', env)) <= set(config):
+    '''
+    Takes `config` loaded from a config file and the environment name `env`.
+
+    If "common" and `env` are keys in `config`, return
+    config['common'].update(config[env]) (i.e. the common config updated with
+    environmet specific config)
+
+    If one of env or common exists, return that config.
+
+    Otherwise just return the whole of `config` unmodified.
+    '''
+    if 'common' in config and env in config:
         c = config['common'].copy()
         c.update(config[env])
     elif env in config.keys():
