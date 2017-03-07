@@ -228,15 +228,15 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
     try:
         if update and create_on_update and not stack_exists(conn, sn):
             conn.create_stack(sn, template_url=tpl_url, template_body=tpl_body,
-                              tags=tags, capabilities=['CAPABILITY_IAM'],
+                              tags=tags, capabilities=['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
                               disable_rollback=disable_rollback)
         elif update:
             conn.update_stack(sn, template_url=tpl_url, template_body=tpl_body,
-                              tags=tags, capabilities=['CAPABILITY_IAM'],
+                              tags=tags, capabilities=['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
                               disable_rollback=disable_rollback)
         else:
             conn.create_stack(sn, template_url=tpl_url, template_body=tpl_body,
-                              tags=tags, capabilities=['CAPABILITY_IAM'],
+                              tags=tags, capabilities=['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
                               disable_rollback=disable_rollback)
         if follow:
             get_events(conn, sn, follow, 10)
