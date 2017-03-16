@@ -82,7 +82,8 @@ def parse_options():
     parser_events.add_argument('name')
     parser_events.add_argument('-f', '--follow', dest='events_follow', action='store_true',
                                help='Poll for new events until stopped.')
-    parser_events.add_argument('-n', '--lines', default='10', type=int)
+    parser_events.add_argument('-n', '--lines', default='10', type=int,
+                               help='Maximum number of lines of CF output returned per 5 second iteration')
 
     return parser, parser.parse_args()
 

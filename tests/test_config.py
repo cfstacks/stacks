@@ -14,21 +14,6 @@ class TestConfig(unittest.TestCase):
         y = config._load_yaml(str(uuid.uuid1()))
         self.assertIsNone(y)
 
-    def test_get_region_name_no_file(self):
-        config.AWS_CONFIG_FILE = str(uuid.uuid1())
-        region = config.get_region_name('bar')
-        self.assertIsNone(region)
-
-    def test_get_region_name_file_exists(self):
-        config.AWS_CONFIG_FILE = 'tests/fixtures/aws_credentials'
-        region = config.get_region_name('bar')
-        self.assertEqual(region, 'eu-west-1')
-
-    def test_get_region_name_default_profile(self):
-        config.AWS_CONFIG_FILE = 'tests/fixtures/aws_credentials'
-        region = config.get_region_name('default')
-        self.assertEqual(region, 'us-east-1')
-
     def test_config_load_no_file(self):
         cfg = config.config_load('myenv')
         self.assertIsInstance(cfg, dict)
