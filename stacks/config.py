@@ -1,8 +1,8 @@
-import json
-import os
 import sys
-
+import os
 import yaml
+import json
+import boto
 
 AWS_CONFIG_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
 RESERVED_PROPERTIES = ['region', 'profile', 'env']
@@ -14,36 +14,36 @@ def config_load(env, config_file=None, config_dir=None):
     conf_files = list_files(config_dir)
     if config_file:
         conf_files.insert(0, config_file)
-    for conf_file in conf_files:
-        config.update(config_merge(env, conf_file))
+    for f in conf_files:
+        config.update(config_merge(env, f))
     config['env'] = env
     return config
 
 
 def config_merge(env, config_file=None):
     '''Merge stacks configuration file environments'''
-    config = _load_yaml(config_file)
-    merged_config = {}
-    if config:
-        merged = _merge(config, env)
-        merged_config.update(merged)
+    c = _load_yaml(config_file)
+    config = {}
+    if c:
+        merged = _merge(c, env)
+        config.update(merged)
     else:
-        merged_config.update({})
+        config.update({})
 
-    return merged_config
+    return config
 
 
 def list_files(dirname):
     '''Return a sorted list of files from dirname'''
-    dirlist = os.listdir(dirname)
-    ymlfiles = []
+    l = os.listdir(dirname)
+    lf = []
     if not dirname:
-        return ymlfiles
-    for filename in dirlist:
-        joined = os.path.join(dirname, filename)
+        return lf
+    for f in l:
+        joined = os.path.join(dirname, f)
         if os.path.isfile(joined) and joined.endswith('.yaml'):
-            ymlfiles.append(joined)
-    return sorted(ymlfiles, reverse=True)
+            lf.append(joined)
+    return sorted(lf, reverse=True)
 
 
 def _merge(config, env):
@@ -59,25 +59,51 @@ def _merge(config, env):
     Otherwise just return the whole of `config` unmodified.
     '''
     if 'common' in config and env in config:
-        merged_config = config['common'].copy()
-        merged_config.update(config[env])
+        c = config['common'].copy()
+        c.update(config[env])
     elif env in config.keys():
-        merged_config = config[env]
+        c = config[env]
     elif 'common' in config.keys():
-        merged_config = config['common']
+        c = config['common']
     else:
-        merged_config = config
-    return merged_config
+        c = config
+    return c
 
 
 def _load_yaml(fname):
     try:
-        with open(fname) as filehandle:
-            contents = yaml.load(filehandle)
-            return contents
-    # FIXME: bare excepts are bad
+        with open(fname) as f:
+            y = yaml.load(f)
+            return y
     except:
         return None
+
+
+def get_region_name(profile):
+    '''Get region name from AWS_CONFIG_FILE
+
+    Return region name
+    '''
+    if os.path.isfile(AWS_CONFIG_FILE):
+        boto.config.load_credential_file(AWS_CONFIG_FILE)
+
+        if boto.config.get(profile, 'region'):
+            return boto.config.get(profile, 'region')
+        else:
+            return None
+    return None
+
+
+def profile_exists(profile):
+    '''Return True if profile exists in AWS_CONFIG_FILE'''
+    if os.path.isfile(AWS_CONFIG_FILE):
+        boto.config.load_credential_file(AWS_CONFIG_FILE)
+        if boto.config.get(profile, 'region'):
+            return True
+        else:
+            return False
+    return False
+
 
 def validate_properties(props_arg):
     properties = dict(p.split('=') for p in props_arg)
@@ -104,6 +130,6 @@ def print_config(config, property_name=None, output_format=None):
     elif output_format == 'json':
         print(json.dumps(config, indent=2))
     else:
-        for key, value in config.items():
-            print('{}={}'.format(key, value))
+        for k, v in config.items():
+            print('{}={}'.format(k, v))
     return

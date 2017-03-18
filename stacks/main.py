@@ -1,17 +1,25 @@
 # An attempt to support python 2.7.x
 from __future__ import print_function
 
-import signal
 import sys
+import os
+import signal
 
-import boto3
-import botocore.exceptions
-from stacks import aws, cf, cli
-from stacks.config import config_load, print_config, validate_properties
+import boto.ec2
+import boto.vpc
+import boto.route53
+import boto.cloudformation
+import boto.s3
 
+from stacks import cli
+from stacks import aws
+from stacks import cf
+from stacks.config import config_load
+from stacks.config import get_region_name
+from stacks.config import profile_exists
+from stacks.config import validate_properties
+from stacks.config import print_config
 
-#Uncomment to get extensive AWS logging from Boto3
-#boto3.set_stream_logger('botocore', level='DEBUG')
 
 def main():
     for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
@@ -38,27 +46,52 @@ def main():
     config['get_stack_output'] = aws.get_stack_output
     config['get_stack_resource'] = aws.get_stack_resource
 
-    session_kwargs = {}
+    # Figure out profile value in the following order
+    # - cli arg
+    # - env variable
+    # - default profile if exists
     if args.profile:
-        session_kwargs['profile_name'] = args.profile
-    if args.region:
-        session_kwargs['region_name'] = args.region
+        profile = args.profile
+    elif os.environ.get('AWS_DEFAULT_PROFILE'):
+        profile = os.environ.get('AWS_DEFAULT_PROFILE')
+    elif profile_exists('default'):
+        profile = 'default'
+    elif args.profile and not profile_exists(args.profile):
+        print('Profile "{}" does not exist.'.format(args.profile))
+        sys.exit(1)
+    else:
+        profile = None
 
+    # Figure out region value in the following order
+    # - cli arg
+    # - env variable
+    # - region from config
+    if args.region:
+        region = args.region
+    elif os.environ.get('AWS_DEFAULT_REGION'):
+        region = os.environ.get('AWS_DEFAULT_REGION')
+    else:
+        region = get_region_name(profile)
+        if not region:
+            print('Region is not specified.')
+            sys.exit(1)
+    config['region'] = region
+
+    # Not great, but try to catch everything. Above should be refactored in a
+    # function which handles setting up connections to different aws services
     try:
-        botosession = boto3.Session(**session_kwargs)
-        config['region'] = botosession.region_name
-        s3_conn = botosession.client('s3')
-        ec2_conn = botosession.resource('ec2')
-        vpc_conn = ec2_conn
-        r53_conn = botosession.client('route53')
-        cf_conn = botosession.client('cloudformation')
+        ec2_conn = boto.ec2.connect_to_region(region, profile_name=profile)
+        vpc_conn = boto.vpc.connect_to_region(region, profile_name=profile)
+        cf_conn = boto.cloudformation.connect_to_region(region, profile_name=profile)
+        r53_conn = boto.route53.connect_to_region(region, profile_name=profile)
+        s3_conn = boto.s3.connect_to_region(region, profile_name=profile)
         config['ec2_conn'] = ec2_conn
         config['vpc_conn'] = vpc_conn
         config['cf_conn'] = cf_conn
         config['r53_conn'] = r53_conn
         config['s3_conn'] = s3_conn
-    except botocore.exceptions.ClientError as e:
-        print(e)
+    except:
+        print(sys.exc_info()[1])
         sys.exit(1)
 
     if args.subcommand == 'resources':
@@ -93,7 +126,7 @@ def main():
                             follow=args.events_follow, create_on_update=args.create_on_update)
 
     if args.subcommand == 'delete':
-        cf.delete_stack(cf_conn, args.name, botosession.region_name, botosession.profile_name, args.yes)
+        cf.delete_stack(cf_conn, args.name, region, profile, args.yes)
         if args.events_follow:
             cf.get_events(cf_conn, args.name, args.events_follow, 10)
 
