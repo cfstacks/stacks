@@ -11,7 +11,7 @@ install_requires = [
     'configargparse>=0.9.3',
     'PyYAML>=3.11',
     'Jinja2>=2.7.3',
-    'boto3',
+    'boto>=2.40.0',
     'tabulate>=0.7.5',
     'setuptools',
 ]
