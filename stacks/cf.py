@@ -21,31 +21,9 @@ from boto.exception import BotoServerError
 
 from stacks.aws import get_stack_tag
 from stacks.aws import throttling_retry
+from stacks.states import FAILED_STACK_STATES, COMPLETE_STACK_STATES, ROLLBACK_STACK_STATES, IN_PROGRESS_STACK_STATES
 
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
-FAILED_STACK_STATES = [
-    'CREATE_FAILED',
-    'ROLLBACK_FAILED',
-    'DELETE_FAILED',
-    'UPDATE_ROLLBACK_FAILED'
-]
-COMPLETE_STACK_STATES = [
-    'CREATE_COMPLETE',
-    'UPDATE_COMPLETE',
-]
-ROLLBACK_STACK_STATES = [
-    'ROLLBACK_COMPLETE',
-    'UPDATE_ROLLBACK_COMPLETE',
-]
-IN_PROGRESS_STACK_STATES = [
-    'CREATE_IN_PROGRESS',
-    'ROLLBACK_IN_PROGRESS',
-    'DELETE_IN_PROGRESS',
-    'UPDATE_IN_PROGRESS',
-    'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
-    'UPDATE_ROLLBACK_IN_PROGRESS',
-    'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
-]
 
 
 def gen_template(tpl_file, config):
@@ -180,8 +158,7 @@ def list_stacks(conn, name_filter='*', verbose=False):
     return None
 
 
-def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
-                 follow=False, create_on_update=False):
+def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False, create_on_update=False):
     '''Create or update CloudFormation stack from a jinja2 template'''
     tpl, metadata = gen_template(tpl_file, config)
 
@@ -201,11 +178,9 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
         tags = default_tags
         disable_rollback = None
 
-    if stack_name:
-        sn = stack_name
-    elif name_from_metadata:
-        sn = name_from_metadata
-    else:
+    if not stack_name:
+        stack_name = name_from_metadata
+    if not stack_name:
         print('Stack name must be specified via command line argument or stack metadata.')
         sys.exit(1)
 
@@ -213,33 +188,31 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
 
     if dry:
         print(tpl, flush=True)
-        print('Name: {}'.format(sn), file=sys.stderr, flush=True)
+        print('Name: {}'.format(stack_name), file=sys.stderr, flush=True)
         print('Tags: ' + ', '.join(['{}={}'.format(k, v) for (k, v) in tags.items()]), file=sys.stderr, flush=True)
         print('Template size:', tpl_size, file=sys.stderr, flush=True)
         return True
 
     if tpl_size > 51200:
-        tpl_url = upload_template(conn, config, tpl, sn)
+        tpl_url = upload_template(conn, config, tpl, stack_name)
         tpl_body = None
     else:
         tpl_url = None
         tpl_body = tpl
 
     try:
-        if update and create_on_update and not stack_exists(conn, sn):
-            conn.create_stack(sn, template_url=tpl_url, template_body=tpl_body,
+        if update and create_on_update and not stack_exists(conn, stack_name):
+            conn.create_stack(stack_name, template_url=tpl_url, template_body=tpl_body,
                               tags=tags, capabilities=['CAPABILITY_IAM'],
                               disable_rollback=disable_rollback)
         elif update:
-            conn.update_stack(sn, template_url=tpl_url, template_body=tpl_body,
+            conn.update_stack(stack_name, template_url=tpl_url, template_body=tpl_body,
                               tags=tags, capabilities=['CAPABILITY_IAM'],
                               disable_rollback=disable_rollback)
         else:
-            conn.create_stack(sn, template_url=tpl_url, template_body=tpl_body,
+            conn.create_stack(stack_name, template_url=tpl_url, template_body=tpl_body,
                               tags=tags, capabilities=['CAPABILITY_IAM'],
                               disable_rollback=disable_rollback)
-        if follow:
-            get_events(conn, sn, follow, 10)
     except BotoServerError as err:
         # Do not exit with 1 when one of the below messages are returned
         non_error_messages = [
@@ -251,6 +224,7 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False,
             sys.exit(0)
         print(err.message)
         sys.exit(1)
+    return stack_name
 
 
 def _extract_tags(metadata):
@@ -289,44 +263,18 @@ def delete_stack(conn, stack_name, region, profile, confirm):
             else:
                 print(err.message)
                 sys.exit(1)
+    else:
+        sys.exit(0)
 
 
-def get_events(conn, stack_name, follow, lines=None):
-    '''Get stack events in chronological order
-
-    Prints tabulated list of events in chronological order
+def get_events(conn, stack_name, next_token):
     '''
-    poll = True
-    seen_ids = set()
-    next_token = None
+    Get stack events
+    '''
     try:
-        while poll:
-            events = conn.describe_stack_events(stack_name, next_token)
-            next_token = events.next_token
-            events_display = [(
-                event.timestamp,
-                event.resource_status,
-                event.resource_type,
-                event.logical_resource_id,
-                event.resource_status_reason
-            ) for event in events[:lines] if event.event_id not in seen_ids]
-
-            seen_ids |= set([event.event_id for event in events])
-
-            if len(events_display) >= 1:
-                print(tabulate(reversed(events_display), tablefmt='plain'), flush=True)
-
-            # Check for stack status, exit with 1 if stack has failed or exit with 0
-            # if it is in successfull state. Otherwise continue polling.
-            stack_status = get_stack_status(conn, stack_name)
-            if stack_status in FAILED_STACK_STATES + ROLLBACK_STACK_STATES:
-                sys.exit(1)
-            elif stack_status in COMPLETE_STACK_STATES:
-                sys.exit(0)
-
-            poll = follow
-            if poll:
-                time.sleep(5)
+        events = conn.describe_stack_events(stack_name, next_token)
+        next_token = events.next_token
+        return events, next_token
     except BotoServerError as err:
         if 'does not exist' in err.message:
             print(err.message)
@@ -334,6 +282,40 @@ def get_events(conn, stack_name, follow, lines=None):
         else:
             print(err.message)
             sys.exit(1)
+
+
+def print_events(conn, stack_name, follow, lines=100):
+    '''
+    Prints tabulated list of events
+    '''
+    events_display = []
+    seen_ids = set()
+    next_token = None
+
+    while True:
+        events, next_token = get_events(conn, stack_name, next_token)
+        status = get_stack_status(conn, stack_name)
+        if follow:
+            events_display = [(event.timestamp, event.resource_status, event.resource_type, event.logical_resource_id,
+                               event.resource_status_reason) for event in events if event.event_id not in seen_ids]
+            if len(events_display) > 0:
+                print(tabulate(reversed(events_display), tablefmt='plain'), flush=True)
+                seen_ids |= set([event.event_id for event in events])
+            if status not in IN_PROGRESS_STACK_STATES and next_token is None:
+                break
+            if next_token is None:
+                time.sleep(5)
+        else:
+            events_display.extend([(event.timestamp, event.resource_status, event.resource_type,
+                                    event.logical_resource_id, event.resource_status_reason)
+                                   for event in events])
+            if len(events_display) >= lines or next_token is None:
+                break
+
+    if not follow:
+        print(tabulate(reversed(events_display[:lines]), tablefmt='plain'), flush=True)
+
+    return status
 
 
 @throttling_retry
