@@ -18,6 +18,7 @@ from jinja2 import meta
 from fnmatch import fnmatch
 from tabulate import tabulate
 from boto.exception import BotoServerError
+from operator import attrgetter
 
 from stacks.aws import get_stack_tag
 from stacks.aws import throttling_retry
@@ -274,7 +275,7 @@ def get_events(conn, stack_name, next_token):
     try:
         events = conn.describe_stack_events(stack_name, next_token)
         next_token = events.next_token
-        return events, next_token
+        return sorted_events(events), next_token
     except BotoServerError as err:
         if 'does not exist' in err.message:
             print(err.message)
@@ -282,6 +283,11 @@ def get_events(conn, stack_name, next_token):
         else:
             print(err.message)
             sys.exit(1)
+
+
+def sorted_events(events):
+    """Sort stack events by timestamp"""
+    return sorted(events, key=attrgetter('timestamp'))
 
 
 def print_events(conn, stack_name, follow, lines=100):
@@ -299,7 +305,7 @@ def print_events(conn, stack_name, follow, lines=100):
             events_display = [(event.timestamp, event.resource_status, event.resource_type, event.logical_resource_id,
                                event.resource_status_reason) for event in events if event.event_id not in seen_ids]
             if len(events_display) > 0:
-                print(tabulate(reversed(events_display), tablefmt='plain'), flush=True)
+                print(tabulate(events_display, tablefmt='plain'), flush=True)
                 seen_ids |= set([event.event_id for event in events])
             if status not in IN_PROGRESS_STACK_STATES and next_token is None:
                 break
@@ -313,7 +319,7 @@ def print_events(conn, stack_name, follow, lines=100):
                 break
 
     if not follow:
-        print(tabulate(reversed(events_display[:lines]), tablefmt='plain'), flush=True)
+        print(tabulate(events_display[:lines], tablefmt='plain'), flush=True)
 
     return status
 
