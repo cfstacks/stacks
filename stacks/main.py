@@ -135,7 +135,7 @@ def main():
 
     if args.subcommand == 'delete':
         cf.delete_stack(cf_conn, args.name, region, profile, args.yes)
-        if args.events_follow and not args.dry_run:
+        if args.events_follow:
             stack_status = cf.print_events(cf_conn, args.name, args.events_follow)
             if stack_status in FAILED_STACK_STATES:
                 sys.exit(1)
