@@ -1,6 +1,6 @@
-'''
+"""
 Cloudformation related functions
-'''
+"""
 # An attempt to support python 2.7.x
 from __future__ import print_function
 
@@ -28,7 +28,7 @@ YES = ['y', 'Y', 'yes', 'YES', 'Yes']
 
 
 def gen_template(tpl_file, config):
-    '''Return a tuple of json string template and options dict'''
+    """Return a tuple of json string template and options dict"""
     tpl_path, tpl_fname = path.split(tpl_file.name)
     env = _new_jinja_env(tpl_path)
 
@@ -49,7 +49,7 @@ def gen_template(tpl_file, config):
 
 
 def _check_missing_vars(env, tpl_file, config):
-    '''Check for missing variables in a template string'''
+    """Check for missing variables in a template string"""
     tpl_str = tpl_file.read()
     ast = env.parse(tpl_str)
     required_properties = meta.find_undeclared_variables(ast)
@@ -70,7 +70,7 @@ def _new_jinja_env(tpl_path):
 # a connection to S3 is being made from a different region than the one a bucket
 # was created in.
 def upload_template(conn, config, tpl, stack_name):
-    '''Upload a template to S3 bucket and returns S3 key url'''
+    """Upload a template to S3 bucket and returns S3 key url"""
     bn = config.get('templates_bucket_name', '{}-stacks-{}'.format(config['env'], config['region']))
 
     try:
@@ -91,7 +91,7 @@ def upload_template(conn, config, tpl, stack_name):
 
 
 def stack_resources(conn, stack_name, logical_resource_id=None):
-    '''List stack resources'''
+    """List stack resources"""
     try:
         result = conn.describe_stack_resources(stack_name_or_id=stack_name,
                                                logical_resource_id=logical_resource_id)
@@ -117,7 +117,7 @@ def stack_resources(conn, stack_name, logical_resource_id=None):
 
 
 def stack_outputs(conn, stack_name, output_name):
-    '''List stacks outputs'''
+    """List stacks outputs"""
     try:
         result = conn.describe_stacks(stack_name)
     except BotoServerError as err:
@@ -139,7 +139,7 @@ def stack_outputs(conn, stack_name, output_name):
 
 
 def list_stacks(conn, name_filter='*', verbose=False):
-    '''List active stacks'''
+    """List active stacks"""
     states = FAILED_STACK_STATES + COMPLETE_STACK_STATES + IN_PROGRESS_STACK_STATES + ROLLBACK_STACK_STATES
     s = conn.list_stacks(states)
 
@@ -160,7 +160,7 @@ def list_stacks(conn, name_filter='*', verbose=False):
 
 
 def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False, create_on_update=False):
-    '''Create or update CloudFormation stack from a jinja2 template'''
+    """Create or update CloudFormation stack from a jinja2 template"""
     tpl, metadata = gen_template(tpl_file, config)
 
     # Set default tags which cannot be overwritten
@@ -229,7 +229,7 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False, cr
 
 
 def _extract_tags(metadata):
-    '''Return tags from a metadata'''
+    """Return tags from a metadata"""
     tags = {}
 
     for tag in metadata.get('tags', []):
@@ -238,12 +238,12 @@ def _extract_tags(metadata):
 
 
 def _calc_md5(j):
-    '''Calculate an MD5 hash of a string'''
+    """Calculate an MD5 hash of a string"""
     return hashlib.md5(j.encode()).hexdigest()
 
 
 def delete_stack(conn, stack_name, region, profile, confirm):
-    '''Deletes stack given its name'''
+    """Deletes stack given its name"""
     msg = ('You are about to delete the following stack:\n'
            'Name: {}\n'
            'Region: {}\n'
@@ -269,9 +269,7 @@ def delete_stack(conn, stack_name, region, profile, confirm):
 
 
 def get_events(conn, stack_name, next_token):
-    '''
-    Get stack events
-    '''
+    """Get stack events"""
     try:
         events = conn.describe_stack_events(stack_name, next_token)
         next_token = events.next_token
@@ -291,9 +289,7 @@ def sorted_events(events):
 
 
 def print_events(conn, stack_name, follow, lines=100):
-    '''
-    Prints tabulated list of events
-    '''
+    """Prints tabulated list of events"""
     events_display = []
     seen_ids = set()
     next_token = None
@@ -326,7 +322,7 @@ def print_events(conn, stack_name, follow, lines=100):
 
 @throttling_retry
 def get_stack_status(conn, stack_name):
-    '''Check stack status'''
+    """Check stack status"""
     stacks = []
     resp = conn.list_stacks()
     stacks.extend(resp)
@@ -340,11 +336,11 @@ def get_stack_status(conn, stack_name):
 
 
 def stack_exists(conn, stack_name):
-    '''Check whether stack_name exists
+    """Check whether stack_name exists
 
     CF keeps deleted duplicate stack names with DELETE_COMPLETE status, which is
     treated as non existing stack.
-    '''
+    """
     status = get_stack_status(conn, stack_name)
     if status == 'DELETE_COMPLETE' or status is None:
         return False

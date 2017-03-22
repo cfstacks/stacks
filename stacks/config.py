@@ -9,7 +9,7 @@ RESERVED_PROPERTIES = ['region', 'profile', 'env']
 
 
 def config_load(env, config_file=None, config_dir=None):
-    '''Load stack configuration files'''
+    """Load stack configuration files"""
     config = {}
     conf_files = list_files(config_dir)
     if config_file:
@@ -21,7 +21,7 @@ def config_load(env, config_file=None, config_dir=None):
 
 
 def config_merge(env, config_file=None):
-    '''Merge stacks configuration file environments'''
+    """Merge stacks configuration file environments"""
     c = _load_yaml(config_file)
     config = {}
     if c:
@@ -34,7 +34,7 @@ def config_merge(env, config_file=None):
 
 
 def list_files(dirname):
-    '''Return a sorted list of files from dirname'''
+    """Return a sorted list of files from dirname"""
     l = os.listdir(dirname)
     lf = []
     if not dirname:
@@ -47,7 +47,7 @@ def list_files(dirname):
 
 
 def _merge(config, env):
-    '''
+    """
     Takes `config` loaded from a config file and the environment name `env`.
 
     If "common" and `env` are keys in `config`, return
@@ -57,7 +57,7 @@ def _merge(config, env):
     If one of env or common exists, return that config.
 
     Otherwise just return the whole of `config` unmodified.
-    '''
+    """
     if 'common' in config and env in config:
         c = config['common'].copy()
         c.update(config[env])
@@ -80,10 +80,10 @@ def _load_yaml(fname):
 
 
 def get_region_name(profile):
-    '''Get region name from AWS_CONFIG_FILE
+    """Get region name from AWS_CONFIG_FILE
 
     Return region name
-    '''
+    """
     if os.path.isfile(AWS_CONFIG_FILE):
         boto.config.load_credential_file(AWS_CONFIG_FILE)
 
@@ -95,7 +95,7 @@ def get_region_name(profile):
 
 
 def profile_exists(profile):
-    '''Return True if profile exists in AWS_CONFIG_FILE'''
+    """Return True if profile exists in AWS_CONFIG_FILE"""
     if os.path.isfile(AWS_CONFIG_FILE):
         boto.config.load_credential_file(AWS_CONFIG_FILE)
         if boto.config.get(profile, 'region'):
