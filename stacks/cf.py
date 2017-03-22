@@ -43,9 +43,9 @@ def gen_template(tpl_file, config):
         sys.exit(1)
 
     if len(docs) == 2:
-        return (json.dumps(docs[1], indent=2, sort_keys=True), docs[0])
+        return json.dumps(docs[1], indent=2, sort_keys=True), docs[0]
     else:
-        return (json.dumps(docs[0], indent=2, sort_keys=True), None)
+        return json.dumps(docs[0], indent=2, sort_keys=True), None
 
 
 def _check_missing_vars(env, tpl_file, config):
