@@ -5,10 +5,10 @@ from stacks import __about__
 
 
 def parse_options():
-    '''Handle command-line options
+    """Handle command-line options
 
     Return parser object and list of arguments
-    '''
+    """
     parser = configargparse.ArgumentParser()
     parser.add_argument('-p', '--profile', required=False)
     parser.add_argument('-r', '--region', required=False)
@@ -81,23 +81,23 @@ def parse_options():
     parser_events = subparsers.add_parser('events', help='List events from a stack')
     parser_events.add_argument('name')
     parser_events.add_argument('-f', '--follow', dest='events_follow', action='store_true',
-                               help='Poll for new events until stopped.')
+                               help='Poll for new events until stopped (overrides -n)')
     parser_events.add_argument('-n', '--lines', default='10', type=int)
 
     return parser, parser.parse_args()
 
 
 def _is_file(fname):
-    '''Check whether fname is a file
+    """Check whether fname is a file
 
     To be used as a type argument in add_argument()
-    '''
+    """
     return fname if os.path.isfile(fname) else None
 
 
 def _is_dir(dirname):
-    '''Check whether dirname is a dir
+    """Check whether dirname is a dir
 
     To be used as a type argument in add_argument()
-    '''
+    """
     return dirname if os.path.isdir(dirname) else None

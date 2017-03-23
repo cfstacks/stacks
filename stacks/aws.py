@@ -4,7 +4,7 @@ from boto.exception import BotoServerError
 
 
 def throttling_retry(func):
-    '''Retry when AWS is throttling API calls'''
+    """Retry when AWS is throttling API calls"""
     def retry_call(*args, **kwargs):
         retries = 0
         while True:
@@ -24,7 +24,7 @@ def throttling_retry(func):
 
 @throttling_retry
 def get_ami_id(conn, name):
-    '''Return the first AMI ID given its name'''
+    """Return the first AMI ID given its name"""
     images = conn.get_all_images(filters={'name': name})
     conn.close()
     if len(images) != 0:
@@ -35,7 +35,7 @@ def get_ami_id(conn, name):
 
 @throttling_retry
 def get_zone_id(conn, name):
-    '''Return the first Route53 zone ID given its name'''
+    """Return the first Route53 zone ID given its name"""
     zone = conn.get_zone(name)
     conn.close()
     if zone:
@@ -46,7 +46,7 @@ def get_zone_id(conn, name):
 
 @throttling_retry
 def get_vpc_id(conn, name):
-    '''Return the first VPC ID given its name and region'''
+    """Return the first VPC ID given its name and region"""
     vpcs = conn.get_all_vpcs(filters={'tag:Name': name})
     conn.close()
     if len(vpcs) == 1:
@@ -57,7 +57,7 @@ def get_vpc_id(conn, name):
 
 @throttling_retry
 def get_stack_output(conn, name, key):
-    '''Return stack output key value'''
+    """Return stack output key value"""
     result = conn.describe_stacks(name)
     if len(result) != 1:
         raise RuntimeError('{} stack not found'.format(name))
@@ -70,7 +70,7 @@ def get_stack_output(conn, name, key):
 
 @throttling_retry
 def get_stack_tag(conn, name, tag):
-    '''Return stack tag'''
+    """Return stack tag"""
     result = conn.describe_stacks(name)
     if len(result) != 1:
         raise RuntimeError('{} stack not found'.format(name))
@@ -80,7 +80,7 @@ def get_stack_tag(conn, name, tag):
 
 @throttling_retry
 def get_stack_resource(conn, stack_name, logical_id):
-    '''Return a physical_resource_id given its logical_id'''
+    """Return a physical_resource_id given its logical_id"""
     resources = conn.describe_stack_resources(stack_name_or_id=stack_name)
     for r in resources:
         # TODO: would be nice to check for resource_status

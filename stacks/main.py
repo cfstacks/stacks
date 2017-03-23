@@ -19,6 +19,7 @@ from stacks.config import get_region_name
 from stacks.config import profile_exists
 from stacks.config import validate_properties
 from stacks.config import print_config
+from stacks.states import FAILED_STACK_STATES, ROLLBACK_STACK_STATES
 
 
 def main():
@@ -90,6 +91,7 @@ def main():
         config['cf_conn'] = cf_conn
         config['r53_conn'] = r53_conn
         config['s3_conn'] = s3_conn
+    # TODO(alekna): Fix too broad exception
     except:
         print(sys.exc_info()[1])
         sys.exit(1)
@@ -118,20 +120,28 @@ def main():
             config.update(properties)
 
         if args.subcommand == 'create':
-            cf.create_stack(cf_conn, args.name, args.template, config,
-                            dry=args.dry_run, follow=args.events_follow)
+            stack_name = cf.create_stack(cf_conn, args.name, args.template, config, dry=args.dry_run)
+            if args.events_follow and not args.dry_run:
+                stack_status = cf.print_events(cf_conn, stack_name, args.events_follow)
+                if stack_status in FAILED_STACK_STATES + ROLLBACK_STACK_STATES:
+                    sys.exit(1)
         else:
-            cf.create_stack(cf_conn, args.name, args.template, config,
-                            update=True, dry=args.dry_run,
-                            follow=args.events_follow, create_on_update=args.create_on_update)
+            stack_name = cf.create_stack(cf_conn, args.name, args.template, config, update=True, dry=args.dry_run,
+                                         create_on_update=args.create_on_update)
+            if args.events_follow and not args.dry_run:
+                stack_status = cf.print_events(cf_conn, stack_name, args.events_follow)
+                if stack_status in FAILED_STACK_STATES + ROLLBACK_STACK_STATES:
+                    sys.exit(1)
 
     if args.subcommand == 'delete':
         cf.delete_stack(cf_conn, args.name, region, profile, args.yes)
         if args.events_follow:
-            cf.get_events(cf_conn, args.name, args.events_follow, 10)
+            stack_status = cf.print_events(cf_conn, args.name, args.events_follow)
+            if stack_status in FAILED_STACK_STATES:
+                sys.exit(1)
 
     if args.subcommand == 'events':
-        cf.get_events(cf_conn, args.name, args.events_follow, args.lines)
+        cf.print_events(cf_conn, args.name, args.events_follow, args.lines)
 
 
 def handler(signum, frame):
