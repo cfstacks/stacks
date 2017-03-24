@@ -19,6 +19,7 @@ from fnmatch import fnmatch
 from tabulate import tabulate
 from boto.exception import BotoServerError
 from operator import attrgetter
+from datetime import datetime
 
 from stacks.aws import get_stack_tag
 from stacks.aws import throttling_retry
@@ -69,7 +70,7 @@ def _new_jinja_env(tpl_path):
 # TODO(vaijab): fix 'S3ResponseError: 301 Moved Permanently', this happens when
 # a connection to S3 is being made from a different region than the one a bucket
 # was created in.
-def upload_template(conn, config, tpl, stack_name):
+def upload_template(config, tpl, stack_name):
     """Upload a template to S3 bucket and returns S3 key url"""
     bn = config.get('templates_bucket_name', '{}-stacks-{}'.format(config['env'], config['region']))
 
@@ -152,7 +153,6 @@ def list_stacks(conn, name_filter='*', verbose=False):
                 columns.append(env)
                 columns.append(n.template_description)
             stacks.append(columns)
-            columns = []
 
     if len(stacks) >= 1:
         return tabulate(stacks, tablefmt='plain')
@@ -195,7 +195,7 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False, cr
         return True
 
     if tpl_size > 51200:
-        tpl_url = upload_template(conn, config, tpl, stack_name)
+        tpl_url = upload_template(config, tpl, stack_name)
         tpl_body = None
     else:
         tpl_url = None
@@ -288,18 +288,20 @@ def sorted_events(events):
     return sorted(events, key=attrgetter('timestamp'))
 
 
-def print_events(conn, stack_name, follow, lines=100):
+def print_events(conn, stack_name, follow, lines=100, from_timestamp=0):
     """Prints tabulated list of events"""
     events_display = []
     seen_ids = set()
     next_token = None
+    from_timestamp = datetime.fromtimestamp(from_timestamp)
 
     while True:
         events, next_token = get_events(conn, stack_name, next_token)
         status = get_stack_status(conn, stack_name)
         if follow:
-            events_display = [(event.timestamp, event.resource_status, event.resource_type, event.logical_resource_id,
-                               event.resource_status_reason) for event in events if event.event_id not in seen_ids]
+            events_display = [(event.timestamp, event.resource_status, event.resource_type,
+                               event.logical_resource_id, event.resource_status_reason) for event in events
+                              if event.event_id not in seen_ids and event.timestamp >= from_timestamp]
             if len(events_display) > 0:
                 print(tabulate(events_display, tablefmt='plain'), flush=True)
                 seen_ids |= set([event.event_id for event in events])
