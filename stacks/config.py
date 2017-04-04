@@ -4,7 +4,7 @@ import yaml
 import json
 import boto
 
-AWS_CONFIG_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
+AWS_CREDENTIALS_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
 RESERVED_PROPERTIES = ['region', 'profile', 'env']
 
 
@@ -80,12 +80,12 @@ def _load_yaml(fname):
 
 
 def get_region_name(profile):
-    """Get region name from AWS_CONFIG_FILE
+    """Get region name from AWS_CREDENTIALS_FILE
 
     Return region name
     """
-    if os.path.isfile(AWS_CONFIG_FILE):
-        boto.config.load_credential_file(AWS_CONFIG_FILE)
+    if os.path.isfile(AWS_CREDENTIALS_FILE):
+        boto.config.load_credential_file(AWS_CREDENTIALS_FILE)
 
         if boto.config.get(profile, 'region'):
             return boto.config.get(profile, 'region')
@@ -95,9 +95,9 @@ def get_region_name(profile):
 
 
 def profile_exists(profile):
-    """Return True if profile exists in AWS_CONFIG_FILE"""
-    if os.path.isfile(AWS_CONFIG_FILE):
-        boto.config.load_credential_file(AWS_CONFIG_FILE)
+    """Return True if profile exists in AWS_CREDENTIALS_FILE"""
+    if os.path.isfile(AWS_CREDENTIALS_FILE):
+        boto.config.load_credential_file(AWS_CREDENTIALS_FILE)
         if boto.config.get(profile, 'region'):
             return True
         else:
