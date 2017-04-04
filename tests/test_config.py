@@ -29,6 +29,16 @@ class TestConfig(unittest.TestCase):
         region = config.get_region_name('default')
         self.assertEqual(region, 'us-east-1')
 
+    def test_get_default_region_name(self):
+        config.AWS_CONFIG_FILE = 'tests/fixtures/aws_config'
+        region = config.get_default_region_name()
+        self.assertEqual(region, 'us-east-1')
+
+    def test_get_default_region_name_no_file(self):
+        config.AWS_CONFIG_FILE = 'tests/fixtures/aws_nonexistingconfig'
+        region = config.get_default_region_name()
+        self.assertIsNone(region)
+
     def test_config_load_no_file(self):
         cfg = config.config_load('myenv')
         self.assertIsInstance(cfg, dict)
