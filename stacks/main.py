@@ -17,6 +17,7 @@ from stacks import aws
 from stacks import cf
 from stacks.config import config_load
 from stacks.config import get_region_name
+from stacks.config import get_default_region_name
 from stacks.config import profile_exists
 from stacks.config import validate_properties
 from stacks.config import print_config
@@ -72,11 +73,15 @@ def main():
         region = args.region
     elif os.environ.get('AWS_DEFAULT_REGION'):
         region = os.environ.get('AWS_DEFAULT_REGION')
-    else:
+    elif get_region_name(profile):
         region = get_region_name(profile)
-        if not region:
-            print('Region is not specified.')
-            sys.exit(1)
+    else:
+        region = get_default_region_name()
+
+    if not region:
+        print('Region is not specified.')
+        sys.exit(1)
+
     config['region'] = region
 
     # Not great, but try to catch everything. Above should be refactored in a

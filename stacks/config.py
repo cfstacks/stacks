@@ -4,6 +4,7 @@ import yaml
 import json
 import boto
 
+AWS_CONFIG_FILE = os.environ.get('HOME', '') + '/.aws/config'
 AWS_CREDENTIALS_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
 RESERVED_PROPERTIES = ['region', 'profile', 'env']
 
@@ -89,6 +90,21 @@ def get_region_name(profile):
 
         if boto.config.get(profile, 'region'):
             return boto.config.get(profile, 'region')
+        else:
+            return None
+    return None
+
+
+def get_default_region_name():
+    """Get default region name from AWS_CONFIG_FILE
+
+    Return region name
+    """
+    if os.path.isfile(AWS_CONFIG_FILE):
+        boto.config.load_credential_file(AWS_CONFIG_FILE)
+
+        if boto.config.get('default', 'region'):
+            return boto.config.get('default', 'region')
         else:
             return None
     return None
