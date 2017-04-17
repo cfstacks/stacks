@@ -1,5 +1,5 @@
-__version__ = '0.3.3'
+__version__ = '0.4.0'
 __licence__ = 'MIT'
-__url__ = 'https://cfstacks.github.io'
+__url__ = 'https://stacks.tools'
 __maintainer__ = 'Vaidas Jablonskis'
 __maintainer_email__ = 'jablonskis@gmail.com'
