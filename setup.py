@@ -8,6 +8,7 @@ with open(os.path.join(base_dir, 'stacks', '__about__.py')) as f:
     exec(f.read(), about)
 
 install_requires = [
+    'awscli>=1.11.130',
     'configargparse>=0.9.3',
     'PyYAML>=3.11',
     'Jinja2>=2.7.3',
