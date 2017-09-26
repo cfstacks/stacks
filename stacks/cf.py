@@ -21,6 +21,8 @@ from boto.exception import BotoServerError
 from operator import attrgetter
 from datetime import datetime
 
+from awscli.customizations.cloudformation.yamlhelper import intrinsics_multi_constructor
+
 from stacks.aws import get_stack_tag
 from stacks.aws import throttling_retry
 from stacks.states import FAILED_STACK_STATES, COMPLETE_STACK_STATES, ROLLBACK_STACK_STATES, IN_PROGRESS_STACK_STATES
@@ -38,7 +40,8 @@ def gen_template(tpl_file, config):
     tpl = env.get_template(tpl_fname)
     rendered = tpl.render(config)
     try:
-        docs = list(yaml.load_all(rendered))
+        yaml.SafeLoader.add_multi_constructor("!", intrinsics_multi_constructor)
+        docs = list(yaml.safe_load_all(rendered))
     except yaml.parser.ParserError as err:
         print(err)
         sys.exit(1)

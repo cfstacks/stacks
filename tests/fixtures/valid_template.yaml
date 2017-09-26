@@ -7,6 +7,10 @@ metadata:
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Test Stack
+Parameters:
+  Foo:
+    Type: String
+    Default: Bar
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -19,3 +23,15 @@ Resources:
           Value: {{ env }}-test-vpc
         - Key: Env
           Value: {{ env }}
+Outputs:
+  Foo:
+    Description: 'Just to test reference and substitution'
+    Value: !Ref Foo
+    Export:
+      Name: !Sub ${AWS::StackName}-Foo
+  VPCCidrBlock:
+    Description: 'Just to test attribute selection'
+    Value: !GetAtt VPC.CidrBlock
+    Export:
+      Name: !Sub ${AWS::StackName}-VPCCidrBlock
+
