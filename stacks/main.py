@@ -4,7 +4,8 @@ from __future__ import print_function
 import sys
 import os
 import signal
-from time import time
+import pytz
+from datetime import datetime
 
 import boto.ec2
 import boto.vpc
@@ -38,6 +39,7 @@ def main():
     config_dir = vars(args).get('config_dir', None)
     env = vars(args).get('env', None)
     config = config_load(env, config_file, config_dir)
+    now = datetime.now(tz=pytz.UTC)
 
     if args.subcommand == 'config':
         print_config(config, args.property_name, output_format=args.output_format)
@@ -132,19 +134,17 @@ def main():
                 if stack_status in FAILED_STACK_STATES + ROLLBACK_STACK_STATES:
                     sys.exit(1)
         else:
-            from_timestamp = time()
             stack_name = cf.create_stack(cf_conn, args.name, args.template, config, update=True, dry=args.dry_run,
                                          create_on_update=args.create_on_update)
             if args.events_follow and not args.dry_run:
-                stack_status = cf.print_events(cf_conn, stack_name, args.events_follow, from_timestamp=from_timestamp)
+                stack_status = cf.print_events(cf_conn, stack_name, args.events_follow, from_dt=now)
                 if stack_status in FAILED_STACK_STATES + ROLLBACK_STACK_STATES:
                     sys.exit(1)
 
     if args.subcommand == 'delete':
-        from_timestamp = time()
         cf.delete_stack(cf_conn, args.name, region, profile, args.yes)
         if args.events_follow:
-            stack_status = cf.print_events(cf_conn, args.name, args.events_follow, from_timestamp=from_timestamp)
+            stack_status = cf.print_events(cf_conn, args.name, args.events_follow, from_dt=now)
             if stack_status in FAILED_STACK_STATES:
                 sys.exit(1)
 
