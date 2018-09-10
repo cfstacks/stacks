@@ -403,14 +403,14 @@ We are going to be deploying stacks using ``project1`` profile. If you prefer
 using environment variables for configuring AWS authentication, then you
 don't have to specify the profile.
 
-Stacks requires you to provide an environment name, for this guide, let's call
+Sample templates requires you to provide an environment name, for this guide, let's call
 it ``learning``. Properties file is environment-aware and can have a common set
 of properties as well as per-environment ones. See :doc:`/fundamentals/configuration`.
 
 There are two ways to set an environment:
 
 * ``STACKS_ENV`` environment variable
-* ``--env`` command line argument to the subcommands
+* ``--env`` or ``-e`` command line argument to the subcommands
 
 Create the VPC stack:
 

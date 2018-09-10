@@ -55,18 +55,18 @@ Create a template file named ``buckets.yaml``:
 
 .. code-block:: jinja
 
-  ---
-  name: s3-buckets
+    ---
+    name: s3-buckets
 
-  ---
-  AWSTemplateFormatVersion: '2010-09-09'
-  Description: S3 buckets
-  Resources:
+    ---
+    AWSTemplateFormatVersion: '2010-09-09'
+    Description: S3 buckets
+    Resources:
     {% for n in range(buckets_count|int) %}
     S3Bucket{{ loop.index0 }}:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: {{ bucket_name_prefix }}{{ loop.index0 }}-{{ region }}
+        BucketName: {{ env }}-{{ bucket_name_prefix }}{{ loop.index0 }}-{{ region }}
     {% endfor -%}
 
 In summary, the template describes, that ``s3-buckets`` stack contains
@@ -77,11 +77,11 @@ defined via ``buckets_count`` property.
 Deploy your template
 --------------------
 
-Create our first stack, ignore ``--env tutorial`` argument for now:
+Create our first stack:
 
 .. code-block:: shell
 
-  $ stacks create --env tutorial --template buckets.yaml
+  $ stacks create --template buckets.yaml --env dev
   Required properties not set: buckets_count,bucket_name_prefix
 
 We get an error about missing properties. To fix that, we must specify the
@@ -89,22 +89,22 @@ missing properties. Add the ``--follow`` flag, to follow stack events:
 
 .. code-block:: shell
 
-  $ stacks create --env tutorial --template buckets.yaml --follow \
+    $ stacks create --template buckets.yaml --env dev --follow \
       --property bucket_name_prefix=my-awesome-bucket \
       --property buckets_count=3
+    2018-09-10 18:30:08.428000+01:00  CREATE_IN_PROGRESS  AWS::CloudFormation::Stack  s3-buckets  User Initiated
+    2018-09-10 18:30:10.883000+01:00  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket0
+    2018-09-10 18:30:10.963000+01:00  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket2
+    2018-09-10 18:30:10.966000+01:00  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket1
+    2018-09-10 18:30:11.732000+01:00  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket2  Resource creation Initiated
+    2018-09-10 18:30:11.837000+01:00  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket0  Resource creation Initiated
+    2018-09-10 18:30:11.923000+01:00  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket1  Resource creation Initiated
+    2018-09-10 18:30:32.608000+01:00  CREATE_COMPLETE  AWS::S3::Bucket             S3Bucket2
+    2018-09-10 18:30:32.615000+01:00  CREATE_COMPLETE  AWS::S3::Bucket             S3Bucket0
+    2018-09-10 18:30:32.782000+01:00  CREATE_COMPLETE  AWS::S3::Bucket             S3Bucket1
+    2018-09-10 18:30:34.229000+01:00  CREATE_COMPLETE  AWS::CloudFormation::Stack  s3-buckets
 
-  2015-12-29 15:04:26.358000  CREATE_IN_PROGRESS  AWS::CloudFormation::Stack  s3-buckets  User Initiated
-  2015-12-29 15:04:41.654000  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket0
-  2015-12-29 15:04:42.491000  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket2
-  2015-12-29 15:04:44.724000  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket0  Resource creation Initiated
-  2015-12-29 15:04:45.705000  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket1
-  2015-12-29 15:04:47.078000  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket1  Resource creation Initiated
-  2015-12-29 15:04:48.484000  CREATE_IN_PROGRESS  AWS::S3::Bucket  S3Bucket2  Resource creation Initiated
-  2015-12-29 15:05:05.999000  CREATE_COMPLETE  AWS::S3::Bucket  S3Bucket0
-  2015-12-29 15:05:08.497000  CREATE_COMPLETE  AWS::S3::Bucket  S3Bucket1
-  2015-12-29 15:05:11.375000  CREATE_COMPLETE  AWS::S3::Bucket  S3Bucket2
-  2015-12-29 15:05:12.921000  CREATE_COMPLETE  AWS::CloudFormation::Stack  s3-buckets
-
+Use of ``--env`` is optional, however it's a good practice to separate resources by environment.
 
 See your new deployment
 -----------------------
@@ -113,17 +113,17 @@ See the status of your new stack by running:
 
 .. code-block:: shell
 
-  $ stacks list
-  s3-buckets  CREATE_COMPLETE
+    $ stacks list
+    s3-buckets  CREATE_COMPLETE
 
 If you want to see what resources have been created by the stack, you can do that by running:
 
 .. code-block:: shell
 
-  $ stacks resources s3-buckets
-  S3Bucket0  my-awesome-bucket0-us-east-1  AWS::S3::Bucket  CREATE_COMPLETE
-  S3Bucket1  my-awesome-bucket1-us-east-1  AWS::S3::Bucket  CREATE_COMPLETE
-  S3Bucket2  my-awesome-bucket2-us-east-1  AWS::S3::Bucket  CREATE_COMPLETE
+    $ stacks resources s3-buckets
+    S3Bucket0  dev-my-awesome-bucket0-us-east-1  AWS::S3::Bucket  CREATE_COMPLETE
+    S3Bucket1  dev-my-awesome-bucket1-us-east-1  AWS::S3::Bucket  CREATE_COMPLETE
+    S3Bucket2  dev-my-awesome-bucket2-us-east-1  AWS::S3::Bucket  CREATE_COMPLETE
 
 
 Clean up
@@ -135,7 +135,7 @@ To delete the deployment, run:
 
 .. code-block:: shell
 
-  $ stacks delete -y s3-buckets
+    $ stacks delete s3-buckets -y
 
 
 Next steps
@@ -143,5 +143,3 @@ Next steps
 Now that you have an idea of how stacks enhances CloudFormation, we recommend
 going through :doc:`/guides/step_by_step_walkthrough` for more comprehensive
 walkthrough.
-
-
