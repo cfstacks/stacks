@@ -1,8 +1,9 @@
-import sys
-import os
-import yaml
 import json
+import os
+import sys
+
 import boto
+import yaml
 
 AWS_CONFIG_FILE = os.environ.get('HOME', '') + '/.aws/config'
 AWS_CREDENTIALS_FILE = os.environ.get('HOME', '') + '/.aws/credentials'
@@ -36,11 +37,10 @@ def config_merge(env, config_file=None):
 
 def list_files(dirname):
     """Return a sorted list of files from dirname"""
-    l = os.listdir(dirname)
     lf = []
     if not dirname:
         return lf
-    for f in l:
+    for f in os.listdir(dirname):
         joined = os.path.join(dirname, f)
         if os.path.isfile(joined) and joined.endswith('.yaml'):
             lf.append(joined)
@@ -74,9 +74,8 @@ def _merge(config, env):
 def _load_yaml(fname):
     try:
         with open(fname) as f:
-            y = yaml.load(f)
-            return y
-    except:
+            return yaml.load(f)
+    except (FileNotFoundError, PermissionError, yaml.YAMLError):
         return None
 
 
