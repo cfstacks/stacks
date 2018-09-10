@@ -16,6 +16,7 @@ install_requires = [
     'tabulate>=0.7.5',
     'setuptools',
     'pytz',
+    'tzlocal',
 ]
 
 tests_require = [

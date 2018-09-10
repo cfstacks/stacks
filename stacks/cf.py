@@ -13,6 +13,7 @@ import jinja2
 import hashlib
 import boto
 import pytz
+import tzlocal
 
 from os import path
 from jinja2 import meta
@@ -302,9 +303,10 @@ def print_events(conn, stack_name, follow, lines=100, from_dt=datetime.fromtimes
         events, next_token = get_events(conn, stack_name, next_token)
         status = get_stack_status(conn, stack_name)
         if follow:
-            events_display = [(ev.timestamp, ev.resource_status, ev.resource_type,
+            normalize_events_timestamps(events)
+            events_display = [(ev.timestamp.astimezone(tzlocal.get_localzone()), ev.resource_status, ev.resource_type,
                                ev.logical_resource_id, ev.resource_status_reason) for ev in events
-                              if ev.event_id not in seen_ids and ev.timestamp.replace(tzinfo=pytz.UTC) >= from_dt]
+                              if ev.event_id not in seen_ids and ev.timestamp >= from_dt]
             if len(events_display) > 0:
                 print(tabulate(events_display, tablefmt='plain'), flush=True)
                 seen_ids |= set([event.event_id for event in events])
@@ -350,3 +352,8 @@ def stack_exists(conn, stack_name):
     if status == 'DELETE_COMPLETE' or status is None:
         return False
     return True
+
+
+def normalize_events_timestamps(events):
+    for ev in events:
+        ev.timestamp = ev.timestamp.replace(tzinfo=pytz.UTC)
