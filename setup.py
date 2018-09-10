@@ -15,6 +15,8 @@ install_requires = [
     'boto>=2.40.0',
     'tabulate>=0.7.5',
     'setuptools',
+    'pytz',
+    'tzlocal',
 ]
 
 tests_require = [
