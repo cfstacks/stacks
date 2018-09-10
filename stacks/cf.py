@@ -4,26 +4,25 @@ Cloudformation related functions
 # An attempt to support python 2.7.x
 from __future__ import print_function
 
-import sys
 import builtins
-import time
-import yaml
-import json
-import jinja2
 import hashlib
+import json
+import sys
+import time
+from datetime import datetime
+from fnmatch import fnmatch
+from operator import attrgetter
+from os import path
+
 import boto
+import jinja2
 import pytz
 import tzlocal
-
-from os import path
-from jinja2 import meta
-from fnmatch import fnmatch
-from tabulate import tabulate
-from boto.exception import BotoServerError
-from operator import attrgetter
-from datetime import datetime
-
+import yaml
 from awscli.customizations.cloudformation.yamlhelper import intrinsics_multi_constructor
+from boto.exception import BotoServerError
+from jinja2 import meta
+from tabulate import tabulate
 
 from stacks.aws import get_stack_tag
 from stacks.aws import throttling_retry
@@ -302,8 +301,8 @@ def print_events(conn, stack_name, follow, lines=100, from_dt=datetime.fromtimes
     while True:
         events, next_token = get_events(conn, stack_name, next_token)
         status = get_stack_status(conn, stack_name)
+        normalize_events_timestamps(events)
         if follow:
-            normalize_events_timestamps(events)
             events_display = [(ev.timestamp.astimezone(tzlocal.get_localzone()), ev.resource_status, ev.resource_type,
                                ev.logical_resource_id, ev.resource_status_reason) for ev in events
                               if ev.event_id not in seen_ids and ev.timestamp >= from_dt]
@@ -315,8 +314,8 @@ def print_events(conn, stack_name, follow, lines=100, from_dt=datetime.fromtimes
             if next_token is None:
                 time.sleep(5)
         else:
-            events_display.extend([(event.timestamp, event.resource_status, event.resource_type,
-                                    event.logical_resource_id, event.resource_status_reason)
+            events_display.extend([(event.timestamp.astimezone(tzlocal.get_localzone()), event.resource_status,
+                                    event.resource_type, event.logical_resource_id, event.resource_status_reason)
                                    for event in events])
             if len(events_display) >= lines or next_token is None:
                 break
