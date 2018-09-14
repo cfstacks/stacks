@@ -1,19 +1,16 @@
 """
 Cloudformation related functions
 """
-# An attempt to support python 2.7.x
-from __future__ import print_function
-
 import builtins
 import hashlib
 import json
 import sys
 import time
+from collections import Mapping, Set, Sequence
 from datetime import datetime
 from fnmatch import fnmatch
 from operator import attrgetter
 from os import path
-from collections import Mapping, Set, Sequence
 
 import boto
 import jinja2

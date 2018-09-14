@@ -5,6 +5,7 @@ from boto.exception import BotoServerError
 
 def throttling_retry(func):
     """Retry when AWS is throttling API calls"""
+
     def retry_call(*args, **kwargs):
         retries = 0
         while True:
@@ -13,12 +14,13 @@ def throttling_retry(func):
                 return retval
             except BotoServerError as err:
                 if (err.code == 'Throttling' or err.code == 'RequestLimitExceeded') and retries <= 3:
-                    sleep = 3 * (2**retries)
+                    sleep = 3 * (2 ** retries)
                     print('Being throttled. Retrying after {} seconds..'.format(sleep))
                     time.sleep(sleep)
                     retries += 1
                 else:
                     raise err
+
     return retry_call
 
 
