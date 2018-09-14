@@ -1,4 +1,5 @@
 import unittest
+
 import boto
 from moto import mock_cloudformation_deprecated
 
@@ -10,16 +11,17 @@ class TestTemplate(unittest.TestCase):
     def test_gen_valid_template(self):
         config = {'env': 'dev', 'test_tag': 'testing'}
         tpl_file = open('tests/fixtures/valid_template.yaml')
-        tpl, options = cf.gen_template(tpl_file, config)
+        tpl, metadata, errors = cf.gen_template(tpl_file, config)
         self.assertIsInstance(tpl, str)
-        self.assertIsInstance(options, dict)
+        self.assertIsInstance(metadata, dict)
+        self.assertEqual(len(errors), 0)
 
     def test_gen_invalid_template(self):
         config = {'env': 'dev', 'test_tag': 'testing'}
         tpl_file = open('tests/fixtures/invalid_template.yaml')
 
         with self.assertRaises(SystemExit) as err:
-            tpl, options = cf.gen_template(tpl_file, config)
+            cf.gen_template(tpl_file, config)
         self.assertEqual(err.exception.code, 1)
 
     def test_gen_template_missing_properties(self):
@@ -27,8 +29,16 @@ class TestTemplate(unittest.TestCase):
         tpl_file = open('tests/fixtures/valid_template.yaml')
 
         with self.assertRaises(SystemExit) as err:
-            tpl, options = cf.gen_template(tpl_file, config)
+            cf.gen_template(tpl_file, config)
         self.assertEqual(err.exception.code, 1)
+
+    def test_gen_invalid_template_with_null_value(self):
+        config = {'env': 'dev', 'test_tag': 'testing'}
+        tpl_file = open('tests/fixtures/invalid_template_with_null_value.yaml')
+        tpl, metadata, errors = cf.gen_template(tpl_file, config)
+        self.assertIsInstance(tpl, str)
+        self.assertIsInstance(metadata, dict)
+        self.assertEqual(len(errors), 1)
 
 
 @mock_cloudformation_deprecated
@@ -85,6 +95,7 @@ class TestStackActions(unittest.TestCase):
         self.assertEqual('my-stack', stack.stack_name)
         self.assertEqual(self.config['env'], stack.tags['Env'])
         self.assertEqual('b08c2e9d7003f62ba8ffe5c985c50a63', stack.tags['MD5Sum'])
+
 
 if __name__ == '__main__':
     unittest.main()
