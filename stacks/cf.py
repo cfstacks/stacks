@@ -13,6 +13,7 @@ from datetime import datetime
 from fnmatch import fnmatch
 from operator import attrgetter
 from os import path
+from collections import Mapping, Set, Sequence
 
 import boto
 import jinja2
@@ -48,9 +49,12 @@ def gen_template(tpl_file, config):
         sys.exit(1)
 
     if len(docs) == 2:
-        return json.dumps(docs[1], indent=2, sort_keys=True), docs[0]
+        tpl, metadata = docs[1], docs[0]
     else:
-        return json.dumps(docs[0], indent=2, sort_keys=True), None
+        tpl, metadata = docs[0], None
+
+    errors = validate_template(tpl)
+    return json.dumps(tpl, indent=2, sort_keys=True), metadata, errors
 
 
 def _check_missing_vars(env, tpl_file, config):
@@ -165,7 +169,7 @@ def list_stacks(conn, name_filter='*', verbose=False):
 
 def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False, create_on_update=False):
     """Create or update CloudFormation stack from a jinja2 template"""
-    tpl, metadata = gen_template(tpl_file, config)
+    tpl, metadata, errors = gen_template(tpl_file, config)
 
     # Set default tags which cannot be overwritten
     default_tags = {
@@ -188,6 +192,11 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False, cr
     if not stack_name:
         print('Stack name must be specified via command line argument or stack metadata.')
         sys.exit(1)
+    if errors:
+        for err in errors:
+            print('ERROR: ' + err)
+        if not dry:
+            sys.exit(1)
 
     tpl_size = len(tpl)
 
@@ -356,3 +365,35 @@ def stack_exists(conn, stack_name):
 def normalize_events_timestamps(events):
     for ev in events:
         ev.timestamp = ev.timestamp.replace(tzinfo=pytz.UTC)
+
+
+def traverse_template(obj, obj_path=(), memo=None):
+    def iteritems(mapping):
+        return getattr(mapping, 'iteritems', mapping.items)()
+
+    if memo is None:
+        memo = set()
+    iterator = None
+    if isinstance(obj, Mapping):
+        iterator = iteritems
+    elif isinstance(obj, (Sequence, Set)) and not isinstance(obj, (str, bytes)):
+        iterator = enumerate
+    if iterator:
+        if id(obj) not in memo:
+            memo.add(id(obj))
+            for path_component, value in iterator(obj):
+                for result in traverse_template(value, obj_path + (path_component,), memo):
+                    yield result
+            memo.remove(id(obj))
+    else:
+        yield obj_path, obj
+
+
+def validate_template(tpl):
+    errors = []
+    for k, v in traverse_template(tpl):
+        if v is None:
+            errors.append(
+                "/{} 'null' values are not allowed in templates".format('/'.join(map(str, k)))
+            )
+    return errors

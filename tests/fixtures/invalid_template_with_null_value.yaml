@@ -1,0 +1,37 @@
+---
+metadata:
+  name: {{ env }}-test-stack
+  tags:
+  - key: Test
+    value: {{ test_tag }}
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Test Stack
+Parameters:
+  Foo:
+    Type: String
+    Default: Bar
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.50.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: {{ env }}-test-vpc
+        - Key: Env
+          Value: null
+Outputs:
+  Foo:
+    Description: 'Just to test reference and substitution'
+    Value: !Ref Foo
+    Export:
+      Name: !Sub ${AWS::StackName}-Foo
+  VPCCidrBlock:
+    Description: 'Just to test attribute selection'
+    Value: !GetAtt VPC.CidrBlock
+    Export:
+      Name: !Sub ${AWS::StackName}-VPCCidrBlock
+
