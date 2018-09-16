@@ -148,6 +148,12 @@ def main():
     if args.subcommand == 'events':
         cf.print_events(cf_conn, args.name, args.events_follow, args.lines)
 
+    if args.subcommand == 'diff':
+        if args.property:
+            properties = validate_properties(args.property)
+            config.update(properties)
+        cf.print_stack_diff(cf_conn, args.name, args.template, config)
+
 
 def handler(signum, _):
     print('Signal {} received. Stopping.'.format(signum))

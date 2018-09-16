@@ -2,6 +2,7 @@
 Cloudformation related functions
 """
 import builtins
+import difflib
 import hashlib
 import json
 import sys
@@ -22,8 +23,7 @@ from boto.exception import BotoServerError
 from jinja2 import meta
 from tabulate import tabulate
 
-from stacks.aws import get_stack_tag
-from stacks.aws import throttling_retry
+from stacks.aws import get_stack_tag, get_stack_template, throttling_retry
 from stacks.states import FAILED_STACK_STATES, COMPLETE_STACK_STATES, ROLLBACK_STACK_STATES, IN_PROGRESS_STACK_STATES
 
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
@@ -177,15 +177,14 @@ def create_stack(conn, stack_name, tpl_file, config, update=False, dry=False, cr
     if metadata:
         tags = _extract_tags(metadata)
         tags.update(default_tags)
-        name_from_metadata = metadata.get('name')
-        disable_rollback = metadata.get('disable_rollback')
+        name_from_metadata = metadata.get('name', None)
+        disable_rollback = metadata.get('disable_rollback', None)
     else:
         name_from_metadata = None
         tags = default_tags
         disable_rollback = None
 
-    if not stack_name:
-        stack_name = name_from_metadata
+    stack_name = stack_name or name_from_metadata
     if not stack_name:
         print('Stack name must be specified via command line argument or stack metadata.')
         sys.exit(1)
@@ -394,3 +393,31 @@ def validate_template(tpl):
                 "/{} 'null' values are not allowed in templates".format('/'.join(map(str, k)))
             )
     return errors
+
+
+def print_stack_diff(conn, stack_name, tpl_file, config):
+    local_template, metadata, errors = gen_template(tpl_file, config)
+
+    if metadata:
+        name_from_metadata = metadata.get('name', None)
+    else:
+        name_from_metadata = None
+
+    stack_name = stack_name or name_from_metadata
+    if not stack_name:
+        print('Stack name must be specified via command line argument or stack metadata.')
+        sys.exit(1)
+    if errors:
+        for err in errors:
+            print('ERROR: ' + err)
+
+    live_template, errors = get_stack_template(conn, stack_name)
+    if errors:
+        for err in errors:
+            print('ERROR: ' + err)
+            sys.exit(1)
+
+    if local_template == live_template:
+        return
+    for line in difflib.ndiff(live_template.split('\n'), local_template.split('\n')):
+        print(line)

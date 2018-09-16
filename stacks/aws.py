@@ -89,3 +89,13 @@ def get_stack_resource(conn, stack_name, logical_id):
         if r.logical_resource_id == logical_id:
             return r.physical_resource_id
     return None
+
+
+@throttling_retry
+def get_stack_template(conn, stack_name):
+    """Return a template body of live stack"""
+    try:
+        template = conn.get_template(stack_name)
+        return template['GetTemplateResponse']['GetTemplateResult']['TemplateBody'], []
+    except BotoServerError as e:
+        return None, [e.message]
