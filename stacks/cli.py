@@ -102,6 +102,22 @@ def parse_options():
                                help='Poll for new events until stopped (overrides -n)')
     parser_events.add_argument('-n', '--lines', default=100, type=int)
 
+    # diff subparser
+    parser_create = subparsers.add_parser('diff', help='Print diff of current vs compiled template')
+    parser_create.add_argument('-t', '--template', required=True, type=configargparse.FileType())
+    # noinspection PyArgumentList
+    parser_create.add_argument('-c', '--config', default='config.yaml',
+                               env_var='STACKS_CONFIG', required=False,
+                               type=_is_file)
+    # noinspection PyArgumentList
+    parser_create.add_argument('--config-dir', default='config.d',
+                               env_var='STACKS_CONFIG_DIR', required=False,
+                               type=_is_dir)
+    parser_create.add_argument('name', nargs='?', default=None)
+    # noinspection PyArgumentList
+    parser_create.add_argument('-e', '--env', env_var='STACKS_ENV', required=False, default=None)
+    parser_create.add_argument('-P', '--property', required=False, action='append')
+
     return parser, parser.parse_args()
 
 

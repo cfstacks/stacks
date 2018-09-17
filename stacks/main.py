@@ -1,27 +1,24 @@
-# An attempt to support python 2.7.x
-from __future__ import print_function
-
-import sys
 import os
 import signal
-import pytz
+import sys
 from datetime import datetime
 
-import boto.ec2
-import boto.vpc
-import boto.route53
 import boto.cloudformation
+import boto.ec2
+import boto.route53
 import boto.s3
+import boto.vpc
+import pytz
 
-from stacks import cli
 from stacks import aws
 from stacks import cf
+from stacks import cli
 from stacks.config import config_load
-from stacks.config import get_region_name
 from stacks.config import get_default_region_name
+from stacks.config import get_region_name
+from stacks.config import print_config
 from stacks.config import profile_exists
 from stacks.config import validate_properties
-from stacks.config import print_config
 from stacks.states import FAILED_STACK_STATES, ROLLBACK_STACK_STATES
 
 
@@ -150,6 +147,12 @@ def main():
 
     if args.subcommand == 'events':
         cf.print_events(cf_conn, args.name, args.events_follow, args.lines)
+
+    if args.subcommand == 'diff':
+        if args.property:
+            properties = validate_properties(args.property)
+            config.update(properties)
+        cf.print_stack_diff(cf_conn, args.name, args.template, config)
 
 
 def handler(signum, _):
