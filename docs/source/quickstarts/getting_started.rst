@@ -62,12 +62,12 @@ Create a template file named ``buckets.yaml``:
     AWSTemplateFormatVersion: '2010-09-09'
     Description: S3 buckets
     Resources:
-    {% for n in range(buckets_count|int) %}
-    S3Bucket{{ loop.index0 }}:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: {{ env }}-{{ bucket_name_prefix }}{{ loop.index0 }}-{{ region }}
-    {% endfor -%}
+      {% for n in range(buckets_count|int) %}
+      S3Bucket{{ loop.index0 }}:
+        Type: AWS::S3::Bucket
+        Properties:
+          BucketName: {{ env }}-{{ bucket_name_prefix }}{{ loop.index0 }}-{{ region }}
+      {% endfor -%}
 
 In summary, the template describes, that ``s3-buckets`` stack contains
 a number of ``AWS::S3::Bucket`` type resources. The number of buckets is
