@@ -1,4 +1,4 @@
-__version__ = '0.4.3'
+__version__ = '0.4.4'
 __licence__ = 'MIT'
 __url__ = 'https://stacks.tools'
 __maintainer__ = 'Vaidas Jablonskis'

@@ -7,6 +7,7 @@ import hashlib
 import json
 import sys
 import time
+# noinspection PyProtectedMember
 from collections import Mapping, Set, Sequence
 from datetime import datetime
 from fnmatch import fnmatch
@@ -18,12 +19,12 @@ import jinja2
 import pytz
 import tzlocal
 import yaml
-from awscli.customizations.cloudformation.yamlhelper import intrinsics_multi_constructor
 from boto.exception import BotoServerError
 from jinja2 import meta
 from tabulate import tabulate
 
 from stacks.aws import get_stack_tag, get_stack_template, throttling_retry
+from stacks.helpers import intrinsics_multi_constructor
 from stacks.states import FAILED_STACK_STATES, COMPLETE_STACK_STATES, ROLLBACK_STACK_STATES, IN_PROGRESS_STACK_STATES
 
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
