@@ -74,7 +74,7 @@ def _merge(config, env):
 def _load_yaml(fname):
     try:
         with open(fname) as f:
-            return yaml.load(f)
+            return yaml.full_load(f)
     except (FileNotFoundError, PermissionError, yaml.YAMLError):
         return None
 
