@@ -24,8 +24,8 @@ tests_require = [
 ]
 
 config = {
-    'name': 'stacks',
-    'description': 'Stacks',
+    'name': 'cfstacks',
+    'description': 'Manage CloudFormation sanely with templates written in YAML',
     'url': about['__url__'],
     'download_url': about['__url__'],
     'version': about['__version__'],
