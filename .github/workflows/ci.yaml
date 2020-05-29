@@ -1,0 +1,26 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [3.5, 3.6, 3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install flake8 and Tox
+        run: pip install flake8 tox
+      - name: Lint with flake8
+        run: |
+          flake8 stacks --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 stacks --count --exit-zero --max-complexity=10
+      - name: Run Tox
+        run: tox -e py

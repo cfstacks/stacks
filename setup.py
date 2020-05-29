@@ -1,4 +1,5 @@
 import os
+
 from setuptools import setup, find_packages
 
 base_dir = os.path.dirname(__file__)
@@ -38,7 +39,7 @@ config = {
             'stacks = stacks.__main__:main',
         ],
     },
-
+    'python_requires': '>=3',
 }
 
 setup(**config)
