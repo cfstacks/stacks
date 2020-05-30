@@ -3,13 +3,11 @@ name: CI
 on: [push]
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python: [3.5, 3.6, 3.7, 3.8]
-
     steps:
       - uses: actions/checkout@v2
       - name: Setup Python
@@ -24,3 +22,24 @@ jobs:
           flake8 stacks --count --exit-zero --max-complexity=10
       - name: Run Tox
         run: tox -e py
+  publish:
+    needs: test
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+      - name: Build
+        run: python setup.py sdist bdist_wheel
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_PASSWORD }}
