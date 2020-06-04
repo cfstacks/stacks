@@ -23,12 +23,9 @@ If you don't already have an AWS account, you can sign up for a free trial:
 
 Install stacks
 --------------
-There are different ways you can install stacks, but the simplest one is to
-install it with pip:
-
 .. parsed-literal::
 
-  $ sudo pip3 install git+https://github.com/cfstacks/stacks.git@v\ |version|
+  $ pip install cfstacks
 
 Export aws access keys and default region to shell environment, replacing
 ``AWS_ACCESS_KEY_ID`` and ``AWS_SECRET_ACCESS_KEY`` with your own keys.

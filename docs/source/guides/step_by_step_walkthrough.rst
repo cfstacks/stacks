@@ -19,42 +19,11 @@ Follow the setup steps to prepare your local environment to use stacks.
 Install stacks
 ^^^^^^^^^^^^^^
 
-Using pip
 """""""""
 
 .. parsed-literal::
 
-  $ sudo pip3 install git+https://github.com/cfstacks/stacks.git@v\ |version|
-
-
-Single PEX binary
-"""""""""""""""""
-Alternatively, you can download a single PEX binary. Go to
-https://github.com/cfstacks/stacks/releases/latest and find a pex file which
-matches your OS and python version. For example, if you you're running linux
-with Python 3.4:
-
-.. parsed-literal::
-
-  $ mkdir -p ~/bin
-  $ wget -O ~/bin/stacks https://github.com/cfstacks/stacks/releases/download/v\ |version|\ /stacks-\ |version|\ -py34-linux-x86_64.pex
-  $ chmod +x ~/bin/stacks
-
-
-Using Docker
-""""""""""""
-
-.. code-block:: shell
-
-  $ docker run -ti --rm quay.io/stacks/stacks
-
-
-Verify that stacks is installed properly:
-
-.. parsed-literal::
-
-  $ stacks --version
-  |version|
+  $ pip install cfstacks
 
 
 Configure Authentication
@@ -149,7 +118,7 @@ us to set key/value pairs and reference values from within templates.
     - 10.10.2.0/24
 
   ami_name: CoreOS-beta-877.1.0-hvm
-  instance_type: t2.micro
+  instance_type: t3.micro
 
 
 Define a VPC template
@@ -465,7 +434,7 @@ this:
     - 10.10.2.0/24
 
   ami_name: CoreOS-alpha-899.1.0-hvm
-  instance_type: t2.micro
+  instance_type: t3.micro
 
 Since ``ami_name`` is not used anywhere in VPC stack, we only need to update
 the autoscaling group stack:
