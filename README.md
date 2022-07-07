@@ -54,7 +54,9 @@ checkout will affect the global `stacks` command.
 
 ```
 $ git clone https://github.com/cfstacks/stacks.git && cd stacks
-$ mkvirtualenv --python=python3 stacks
+$ mkvirtualenv --python=python3 venv
+$ source ./venv/bin/activate
+$ pip install -r requirements.txt
 $ pip install -e .
 ```
 

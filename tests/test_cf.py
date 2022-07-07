@@ -1,6 +1,7 @@
 import unittest
 
-import boto
+from boto import cloudformation, s3
+
 from moto import mock_cloudformation_deprecated
 
 from stacks import cf
@@ -50,8 +51,8 @@ class TestStackActions(unittest.TestCase):
             'custom_tag': 'custom-tag-value',
             'region': 'us-east-1',
         }
-        self.config['cf_conn'] = boto.cloudformation.connect_to_region(self.config['region'])
-        self.config['s3_conn'] = boto.s3.connect_to_region(self.config['region'])
+        self.config['cf_conn'] = cloudformation.connect_to_region(self.config['region'])
+        self.config['s3_conn'] = s3.connect_to_region(self.config['region'])
 
     def test_create_stack(self):
         stack_name = None
