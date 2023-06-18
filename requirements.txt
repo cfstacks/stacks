@@ -3,8 +3,8 @@ PyYAML>=5.3.1
 Jinja2>=2.7.3
 boto>=2.40.0
 tabulate>=0.7.5
-setuptools
-moto[all]>=2.0,<3.0
+setuptools==67.8.0
+moto[all]==4.1.11
 pytz
 tzlocal
 pytest
