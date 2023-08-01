@@ -13,6 +13,8 @@ install_requires = [
     'PyYAML>=4.2b1',
     'Jinja2>=2.7.3',
     'boto>=2.40.0',
+    'docker==6.1.3',
+    'openapi-spec-validator==0.5.7',
     'tabulate>=0.7.5',
     'setuptools',
     'pytz',

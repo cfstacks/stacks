@@ -7,12 +7,11 @@ import hashlib
 import json
 import sys
 import time
-# noinspection PyProtectedMember
-from collections import Mapping, Set, Sequence
 from datetime import datetime
 from fnmatch import fnmatch
 from operator import attrgetter
 from os import path
+from typing import Mapping, Sequence, Set
 
 import boto
 import jinja2
@@ -25,7 +24,8 @@ from tabulate import tabulate
 
 from stacks.aws import get_stack_tag, get_stack_template, throttling_retry
 from stacks.helpers import intrinsics_multi_constructor
-from stacks.states import FAILED_STACK_STATES, COMPLETE_STACK_STATES, ROLLBACK_STACK_STATES, IN_PROGRESS_STACK_STATES
+from stacks.states import (COMPLETE_STACK_STATES, FAILED_STACK_STATES,
+                           IN_PROGRESS_STACK_STATES, ROLLBACK_STACK_STATES)
 
 YES = ['y', 'Y', 'yes', 'YES', 'Yes']
 

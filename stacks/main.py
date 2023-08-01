@@ -10,15 +10,10 @@ import boto.s3
 import boto.vpc
 import pytz
 
-from stacks import aws
-from stacks import cf
-from stacks import cli
-from stacks.config import config_load
-from stacks.config import get_default_region_name
-from stacks.config import get_region_name
-from stacks.config import print_config
-from stacks.config import profile_exists
-from stacks.config import validate_properties
+from stacks import aws, cf, cli
+from stacks.config import (config_load, get_default_region_name,
+                           get_region_name, print_config, profile_exists,
+                           validate_properties)
 from stacks.states import FAILED_STACK_STATES, ROLLBACK_STACK_STATES
 
 

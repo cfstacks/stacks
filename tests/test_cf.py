@@ -1,8 +1,7 @@
 import unittest
 
 from boto import cloudformation, s3
-
-from moto import mock_cloudformation_deprecated
+from moto import mock_cloudformation
 
 from stacks import cf
 
@@ -42,7 +41,7 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(len(errors), 1)
 
 
-@mock_cloudformation_deprecated
+@mock_cloudformation
 class TestStackActions(unittest.TestCase):
 
     def setUp(self):
